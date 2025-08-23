@@ -1,0 +1,88 @@
+┌─────────────────────────────────────┐
+│    < Back      Loan Valuation       │
+├─────────────────────────────────────┤
+│                                     │
+│            ✅ APPROVED!             │
+│                                     │
+│  ┌─────────────────────────────────┐ │
+│  │ 📱 iPhone 13 Pro Max 256GB     │ │
+│  │                                 │ │
+│  │    [Photo thumbnails]           │ │
+│  │   📷 📷 📷 📷                   │ │
+│  └─────────────────────────────────┘ │
+│                                     │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
+│                                     │
+│             LOAN OFFER              │
+│                                     │
+│  Maximum Approved:  💰 $450.00     │
+│  Interest Rate:     📈 12% APR      │
+│  Loan Term:         📅 30 days     │
+│  Estimated Item Value: $750        │
+│                                     │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
+│                                     │
+│  Enter loan amount (max $450):      │
+│  ┌─────────────────────────────────┐ │
+│  │  $[___________]                 │ │
+│  └─────────────────────────────────┘ │
+│                                     │
+│  If not repaid by Jan 15, 2026:    │
+│  • Item will be sold                │
+│  • You can extend for $25 fee       │
+│                                     │
+│  ┌─────────────────────────────────┐ │
+│  │     [Proceed with Loan]         │ │
+│  └─────────────────────────────────┘ │
+│                                     │
+│  ┌─────────────────────────────────┐ │
+│  │           [Decline]             │ │
+│  └─────────────────────────────────┘ │
+├─────────────────────────────────────┤
+│  [Borrow]  │         [Invest]       │
+│   ●●●●●    │                        │
+└─────────────────────────────────────┘
+
+Alternative - Rejection Screen:
+┌─────────────────────────────────────┐
+│    < Back      Loan Valuation       │
+├─────────────────────────────────────┤
+│                                     │
+│           ❌ NOT APPROVED           │
+│                                     │
+│  ┌─────────────────────────────────┐ │
+│  │ 🧸 Used Teddy Bear              │ │
+│  │                                 │ │
+│  │    [Photo thumbnails]           │ │
+│  │   📷 📷                         │ │
+│  └─────────────────────────────────┘ │
+│                                     │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
+│                                     │
+│  Unfortunately, we cannot offer     │
+│  a loan for this item.              │
+│                                     │
+│  Reasons:                           │
+│  • Low estimated value              │
+│  • Difficult to resell             │
+│  • Condition concerns               │
+│                                     │
+│  ┌─────────────────────────────────┐ │
+│  │        [Try Another Item]       │ │
+│  └─────────────────────────────────┘ │
+│                                     │
+│  ┌─────────────────────────────────┐ │
+│  │         [Contact Support]       │ │
+│  └─────────────────────────────────┘ │
+├─────────────────────────────────────┤
+│  [Borrow]  │         [Invest]       │
+│   ●●●●●    │                        │
+└─────────────────────────────────────┘
+
+Features:
+- Clear approval/rejection status
+- Item summary with photos
+- Detailed loan terms
+- Clear consequences explanation
+- Accept/decline options
+- Support contact for rejections

@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from database import db_manager
 
 # Import routers
-from routes import users, accounts, transactions
+from routes import users, accounts, transactions, collaterals
 
 app = FastAPI(
     title="Celebral Valley API",
@@ -26,6 +26,7 @@ app.add_middleware(
 app.include_router(users.router)
 app.include_router(accounts.router)
 app.include_router(transactions.router)
+app.include_router(collaterals.router)
 
 @app.get("/")
 async def root():
@@ -37,7 +38,8 @@ async def root():
         "endpoints": {
             "users": "/users",
             "accounts": "/accounts", 
-            "transactions": "/transactions"
+            "transactions": "/transactions",
+            "collaterals": "/collaterals"
         }
     }
 

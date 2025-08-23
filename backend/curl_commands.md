@@ -186,7 +186,7 @@ curl -X GET "http://localhost:8000/accounts/{account_id}/exists"
 
 ---
 
-## 💰 Collateral Management
+## 🏠 Collateral Management
 
 ### 1. Create Collateral
 ```bash
@@ -194,44 +194,47 @@ curl -X POST "http://localhost:8000/collaterals/" \
   -H "Content-Type: application/json" \
   -d '{
     "user_id": "{user_id}",
+    "account_id": "{account_id}",
+    "collateral_type": "watch",
+    "title": "Rolex Submariner",
+    "description": "Luxury watch for loan collateral",
+    "estimated_value": 15000.00,
     "loan_amount": 10000.00,
-    "loan_limit": 15000.00,
-    "interest": 5.5,
-    "due_date": "2024-12-31T23:59:59Z",
-    "image_paths": ["/path/to/image1.jpg", "/path/to/image2.jpg"],
-    "metadata": {
-      "collateral_type": "jewelry",
-      "description": "Gold necklace"
-    }
+    "loan_duration_days": 90
   }'
 ```
 
 ### 2. Get All Collaterals
 ```bash
+# Get all collaterals
 curl -X GET "http://localhost:8000/collaterals/"
+
+# Get collaterals with pagination
+curl -X GET "http://localhost:8000/collaterals/?page=1&page_size=10"
+
+# Get collaterals by user
+curl -X GET "http://localhost:8000/collaterals/?user_id={user_id}"
+
+# Get collaterals by account
+curl -X GET "http://localhost:8000/collaterals/?account_id={account_id}"
+
+# Get collaterals by type
+curl -X GET "http://localhost:8000/collaterals/?collateral_type=watch"
+
+# Get collaterals by status
+curl -X GET "http://localhost:8000/collaterals/?status=pending"
 ```
 
-### 3. Get Collateral by ID
-```bash
-curl -X GET "http://localhost:8000/collaterals/{collateral_id}"
-```
-
-### 4. Update Collateral
+### 3. Update Collateral
 ```bash
 curl -X PUT "http://localhost:8000/collaterals/{collateral_id}" \
   -H "Content-Type: application/json" \
   -d '{
-    "status": "approved",
-    "loan_amount": 12000.00
+    "title": "Updated Rolex Submariner",
+    "estimated_value": 16000.00,
+    "status": "approved"
   }'
 ```
-
-### 5. Delete Collateral
-```bash
-curl -X DELETE "http://localhost:8000/collaterals/{collateral_id}"
-```
-
----
 
 ## 💰 Transaction Management
 
@@ -479,11 +482,13 @@ curl http://localhost:8000/
 - The API uses JSON for request/response bodies
 - Error responses include detailed error messages
 - Pagination is available for list endpoints
-- Filtering is available for user, account, and transaction endpoints
+- Filtering is available for user, account, collateral, and transaction endpoints
 - **One account per user** - attempting to create a second account for the same user will fail
 - **Organization role** - users can have role "organization" for organizational accounts
 - **Auto-generated account numbers** - account numbers are automatically generated in format `ACC{timestamp}{random_suffix}` and are guaranteed to be unique
 - **Transaction types** - supported types: `invest`, `withdraw`, `pay_loan`, `extend_loan`, `interest`, `loan_disbursement`, `fee`
 - **Transaction statuses** - supported statuses: `pending`, `completed`, `failed`, `cancelled`, `reversed`
 - **Immutable transactions** - transactions cannot be updated, modified, or deleted as they are ledger entries
+- **Collateral types** - supported types: `watch`, `jewelry`, `electronics`, `vehicle`, `real_estate`, `other`
+- **Collateral statuses** - supported statuses: `pending`, `approved`, `rejected`, `active`, `liquidated`, `repaid`
 - **Business logic placeholders** - transaction endpoints include TODO comments where business logic will be implemented later

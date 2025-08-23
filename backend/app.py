@@ -1,8 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+# Import database manager
+from database import db_manager
+
 # Import routers
-from routes import users, accounts, collaterals, transactions, auth
+from routes import users, accounts, collaterals, transactions
 
 app = FastAPI(
     title="Celebral Valley API",
@@ -20,7 +23,6 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(accounts.router)
 app.include_router(collaterals.router)
@@ -30,11 +32,10 @@ app.include_router(transactions.router)
 async def root():
     """Root endpoint with API information"""
     return {
-        "message": "Welcome to Celebral Valley API",
+        "message": "Welcome to Kachra Seth API",
         "version": "1.0.0",
         "description": "A DeFi lending and borrowing platform",
         "endpoints": {
-            "auth": "/auth",
             "users": "/users",
             "accounts": "/accounts", 
             "collaterals": "/collaterals",
@@ -45,21 +46,25 @@ async def root():
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
-    return {"status": "healthy", "message": "API is running"}
+    from database import check_db_health
+    
+    db_health = await check_db_health()
+    
+    return {
+        "status": "healthy" if db_health["status"] == "healthy" else "unhealthy",
+        "message": "API is running",
+        "database": db_health
+    }
 
-# Database initialization and background tasks can be added here
-# For example:
-# @app.on_event("startup")
-# async def startup_event():
-#     # Initialize database connection
-#     # Run migrations
-#     pass
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database connections on startup"""
+    await db_manager.initialize()
 
-# @app.on_event("shutdown") 
-# async def shutdown_event():
-#     # Close database connections
-#     # Cleanup resources
-#     pass
+@app.on_event("shutdown") 
+async def shutdown_event():
+    """Close database connections on shutdown"""
+    await db_manager.close()
 
 
 

@@ -1,0 +1,50 @@
+┌─────────────────────────────────────┐
+│    < Back      Loan Details         │
+├─────────────────────────────────────┤
+│                                     │
+│  ┌─────────────────────────────────┐ │
+│  │ 📱 iPhone 13 Pro Max 256GB     │ │
+│  │                                 │ │
+│  │   📷 📷 📷 📷                   │ │
+│  │  [Tap to view photos]           │ │
+│  └─────────────────────────────────┘ │
+│                                     │
+│  Loan Amount:     💰 $450.00       │
+│  Interest:        📈 $54.00 (12%)  │
+│  Total Due:       💲 $504.00       │
+│                                     │
+│  Start Date:      📅 Dec 15, 2025  │
+│  Due Date:        📅 Jan 15, 2026  │
+│  Days Remaining:  ⏰ 18 days        │
+│                                     │
+│  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
+│                                     │
+│  Payment Options:                   │
+│                                     │
+│  ┌─────────────────────────────────┐ │
+│  │        [Pay Full Amount]        │ │
+│  │          $504.00                │ │
+│  └─────────────────────────────────┘ │
+│                                     │
+│  ┌─────────────────────────────────┐ │
+│  │       [Extend Loan (+$25)]      │ │
+│  │        30 more days             │ │
+│  └─────────────────────────────────┘ │
+│                                     │
+│  ┌─────────────────────────────────┐ │
+│  │        [Partial Payment]        │ │
+│  │      Interest only: $54         │ │
+│  └─────────────────────────────────┘ │
+│                                     │
+├─────────────────────────────────────┤
+│  [Borrow]  │         [Invest]       │
+│   ●●●●●    │                        │
+└─────────────────────────────────────┘
+
+Features:
+- Detailed loan information
+- Photo gallery access
+- Clear payment breakdown
+- Multiple payment options
+- Extension and partial payment options
+- Days remaining prominently displayed

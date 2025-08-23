@@ -56,27 +56,43 @@ class DatabaseManager:
     async def execute(self, query: str, *args) -> str:
         """Execute a query and return the result"""
         async with self.get_connection() as conn:
-            result = await conn.execute(query, args)
+            if args:
+                result = await conn.execute(query, args)
+            else:
+                result = await conn.execute(query)
+            await conn.commit()
             return result.statusmessage
     
     async def fetch(self, query: str, *args) -> List[Dict[str, Any]]:
         """Fetch rows from a query"""
         async with self.get_connection() as conn:
-            cursor = await conn.execute(query, args)
+            if args:
+                cursor = await conn.execute(query, args)
+            else:
+                cursor = await conn.execute(query)
             return await cursor.fetchall()
     
     async def fetchrow(self, query: str, *args) -> Optional[Dict[str, Any]]:
         """Fetch a single row from a query"""
         async with self.get_connection() as conn:
-            cursor = await conn.execute(query, args)
+            if args:
+                cursor = await conn.execute(query, args)
+            else:
+                cursor = await conn.execute(query)
             return await cursor.fetchone()
     
     async def fetchval(self, query: str, *args) -> Any:
         """Fetch a single value from a query"""
         async with self.get_connection() as conn:
-            cursor = await conn.execute(query, args)
+            if args:
+                cursor = await conn.execute(query, args)
+            else:
+                cursor = await conn.execute(query)
             row = await cursor.fetchone()
-            return row[0] if row else None
+            if row:
+                # Return the first value from the dict
+                return list(row.values())[0]
+            return None
     
     async def health_check(self) -> Dict[str, Any]:
         """Check database connectivity"""
@@ -89,7 +105,7 @@ class DatabaseManager:
                 # Get version info
                 cursor = await conn.execute("SELECT version()")
                 version = await cursor.fetchone()
-                version_str = version[0] if version else "unknown"
+                version_str = version['version'] if version else "unknown"
                 
                 return {
                     "status": "healthy",
@@ -102,7 +118,9 @@ class DatabaseManager:
         except Exception as e:
             return {
                 "status": "unhealthy",
-                "error": str(e)
+                "error": str(e),
+                "error_type": type(e).__name__,
+                "error_details": repr(e)
             }
 
 # Global database manager instance

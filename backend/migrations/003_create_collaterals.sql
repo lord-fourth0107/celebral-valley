@@ -10,12 +10,20 @@ CREATE TABLE IF NOT EXISTS collaterals (
     image_paths JSON,
     metadata JSON,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    INDEX idx_user_id (user_id),
-    INDEX idx_status (status),
-    INDEX idx_due_date (due_date),
-    INDEX idx_loan_amount (loan_amount),
-    INDEX idx_loan_limit (loan_limit)
+    FOREIGN KEY (user_id) REFERENCES app_users(id) ON DELETE CASCADE
 );
+
+-- Create indexes
+CREATE INDEX IF NOT EXISTS idx_collaterals_user_id ON collaterals (user_id);
+CREATE INDEX IF NOT EXISTS idx_collaterals_status ON collaterals (status);
+CREATE INDEX IF NOT EXISTS idx_collaterals_due_date ON collaterals (due_date);
+CREATE INDEX IF NOT EXISTS idx_collaterals_loan_amount ON collaterals (loan_amount);
+CREATE INDEX IF NOT EXISTS idx_collaterals_loan_limit ON collaterals (loan_limit);
+
+-- Create trigger for collaterals table
+CREATE TRIGGER update_collaterals_updated_at 
+    BEFORE UPDATE ON collaterals 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();

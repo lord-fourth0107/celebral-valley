@@ -10,6 +10,7 @@ class CollateralStatus(str, Enum):
     APPROVED = "approved"
     REJECTED = "rejected"
     RELEASED = "released"
+    DEFAULTED = "defaulted"
 
 
 class Collateral(BaseModel):
@@ -19,5 +20,6 @@ class Collateral(BaseModel):
     loan_amount: Decimal = Field(..., title="Loan Amount", description="Amount of loan against this collateral")
     loan_limit: Decimal = Field(..., title="Loan Limit", description="Maximum loan amount allowed against this collateral")
     interest: Decimal = Field(..., title="Interest", description="Interest rate for the loan against this collateral")
-    image_path: Optional[str] = Field(None, title="Image Path", description="Path to the collateral image")
+    due_date: datetime = Field(..., title="Due Date", description="Due date for the collateral loan")
+    image_paths: Optional[List[str]] = Field([], title="Image Paths", description="Paths to the collateral images")
     metadata: Optional[dict] = Field(None, title="Metadata", description="Additional collateral metadata")

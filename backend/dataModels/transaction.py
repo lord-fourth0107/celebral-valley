@@ -6,11 +6,16 @@ from decimal import Decimal
 
 
 class TransactionType(str, Enum):
-    DEPOSIT = "deposit"
-    WITHDRAWAL = "withdrawal"
-    INTEREST = "interest"
-    LOAN_DISBURSEMENT = "loan_disbursement"
-    PAYMENT = "payment"
+    
+    # Investment transactions
+    DEPOSIT = "deposit"                    # Credit - Money going into investment account
+    WITHDRAWAL = "withdrawal"              # Debit - Money coming out of investment account
+    INTEREST = "interest"                  # Credit - Interest earned on investment
+    
+    # Loan transactions
+    LOAN_DISBURSEMENT = "loan_disbursement"  # Credit - Loan amount disbursed to borrower
+    PAYMENT = "payment"                      # Debit - Loan payment made by borrower
+    FEE = "fee"                             # Debit - Various fees charged
 
 
 class TransactionStatus(str, Enum):
@@ -28,6 +33,7 @@ class Transaction(BaseModel):
     transaction_type: TransactionType = Field(..., title="Transaction Type", description="Type of transaction")
     status: TransactionStatus = Field(default=TransactionStatus.PENDING, title="Status", description="Transaction status")
     amount: Decimal = Field(..., title="Amount", description="Transaction amount")
+    fee: Optional[Decimal] = Field(None, title="Fee", description="Transaction fee (e.g., for extending collateral due date)")
     description: Optional[str] = Field(None, title="Description", description="Transaction description")
     reference_number: Optional[str] = Field(None, title="Reference Number", description="External reference number")
     collateral_id: Optional[str] = Field(None, title="Collateral ID", description="ID of collateral for loan-related transactions")

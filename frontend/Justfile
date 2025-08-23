@@ -1,0 +1,115 @@
+# Camera Upload App - Development Commands
+# Usage: just <command>
+
+# Default recipe - show available commands
+default:
+    @just --list
+
+# Setup commands
+setup: setup-frontend setup-backend
+    @echo "✅ Setup complete! Ready to develop"
+
+# Install frontend dependencies
+setup-frontend:
+    @echo "📱 Installing frontend dependencies..."
+    npm install
+
+# Install backend dependencies  
+setup-backend:
+    @echo "🖥️  Installing backend dependencies..."
+    cd server && npm install
+
+# Development commands
+dev: dev-backend dev-frontend
+    @echo "🚀 Starting both frontend and backend..."
+
+# Start backend server in development mode
+dev-backend:
+    @echo "🖥️  Starting backend server..."
+    cd server && npm run dev
+
+# Start frontend Expo development server
+dev-frontend:
+    @echo "📱 Starting frontend Expo server..."
+    npx expo start
+
+# Start backend server in production mode
+start-backend:
+    @echo "🖥️  Starting backend server (production)..."
+    cd server && npm start
+
+# Start frontend for web preview
+start-web:
+    @echo "🌐 Starting frontend for web..."
+    npx expo start --web
+
+# Testing and utilities
+test-backend:
+    @echo "🧪 Testing backend health..."
+    curl -f http://localhost:3000/ || echo "❌ Backend not responding"
+
+# View uploaded images
+list-uploads:
+    @echo "📂 Listing uploaded images..."
+    curl -s http://localhost:3000/images | jq '.' || echo "❌ Backend not responding"
+
+# Clean commands
+clean: clean-frontend clean-backend
+    @echo "🧹 Cleaned all build artifacts and dependencies"
+
+clean-frontend:
+    @echo "🧹 Cleaning frontend..."
+    rm -rf node_modules .expo
+
+clean-backend:
+    @echo "🧹 Cleaning backend..."
+    cd server && npm run clean
+
+# Utility commands
+kill-servers:
+    @echo "🔪 Killing any running servers..."
+    pkill -f "node.*server.js" || true
+    pkill -f "expo start" || true
+
+check-ports:
+    @echo "🔍 Checking if ports are in use..."
+    lsof -ti:3000 && echo "Port 3000 (backend) is in use" || echo "Port 3000 (backend) is free"
+    lsof -ti:8081 && echo "Port 8081 (expo) is in use" || echo "Port 8081 (expo) is free"
+
+# Build commands (for production deployment)
+build-frontend:
+    @echo "📦 Building frontend for production..."
+    npx expo export
+
+# Help and information
+info:
+    @echo "📋 Camera Upload App Information:"
+    @echo "  Frontend: React Native with Expo"
+    @echo "  Backend:  Node.js with Express"
+    @echo "  Ports:    Backend (3000), Expo (8081)"
+    @echo ""
+    @echo "🚀 Quick Start:"
+    @echo "  just setup    # Install dependencies"
+    @echo "  just dev      # Start development servers"
+    @echo ""
+    @echo "📱 Mobile Development:"
+    @echo "  - Install Expo Go app on your phone"  
+    @echo "  - Scan QR code from 'just dev-frontend'"
+    @echo ""
+    @echo "🌐 Web Development:"
+    @echo "  just start-web   # Test in browser"
+
+# Open useful URLs
+open-backend:
+    open http://localhost:3000
+
+open-images:
+    open http://localhost:3000/images
+
+# Development workflow helpers
+restart: kill-servers dev
+    @echo "🔄 Restarted all services"
+
+logs-backend:
+    @echo "📝 Backend logs (last 50 lines):"
+    @tail -50 server/uploads/*.log 2>/dev/null || echo "No log files found"

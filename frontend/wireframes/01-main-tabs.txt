@@ -1,0 +1,32 @@
+┌─────────────────────────────────────┐
+│              PawnLoan               │
+├─────────────────────────────────────┤
+│                                     │
+│                                     │
+│                                     │
+│          TAB CONTENT AREA           │
+│                                     │
+│         (Borrow or Invest)          │
+│                                     │
+│                                     │
+│                                     │
+│                                     │
+│                                     │
+│                                     │
+│                                     │
+│                                     │
+│                                     │
+│                                     │
+│                                     │
+│                                     │
+│                                     │
+├─────────────────────────────────────┤
+│  [Borrow]  │         [Invest]       │
+│   ●●●●●    │                        │
+└─────────────────────────────────────┘
+
+Main Navigation:
+- Bottom tab bar with two sections
+- Borrow tab is active (filled circles)
+- Content area shows current tab's content
+- Header shows app name "PawnLoan"

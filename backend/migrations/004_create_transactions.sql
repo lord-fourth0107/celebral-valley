@@ -6,7 +6,6 @@ CREATE TABLE IF NOT EXISTS transactions (
     transaction_type VARCHAR(50) NOT NULL CHECK (transaction_type IN ('deposit', 'withdrawal', 'interest', 'loan_disbursement', 'payment', 'fee')),
     status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'failed', 'cancelled', 'reversed')),
     amount DECIMAL(15,2) NOT NULL,
-    fee DECIMAL(15,2),
     description TEXT,
     reference_number VARCHAR(255),
     collateral_id VARCHAR(255),

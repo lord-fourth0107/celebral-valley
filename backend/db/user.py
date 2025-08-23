@@ -23,7 +23,7 @@ class UserDB:
         
         query = """
             INSERT INTO app_users (
-                id, email, username, first_name, last_name, phone, date_of_birth,
+                id, email, username, first_name, last_name, phone, date_of_birth, 
                 address, city, state, country, postal_code, role, status, 
                 kyc_verified, created_at, updated_at
             ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
@@ -48,7 +48,7 @@ class UserDB:
             now,
             now
         )
-        
+
         async with db_manager.get_connection() as conn:
             await conn.execute(query, params)
             await conn.commit()

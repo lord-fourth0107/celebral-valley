@@ -9,6 +9,7 @@ class UserRole(str, Enum):
     USER = "user"
     ADMIN = "admin"
     VERIFIER = "verifier"
+    ORGANIZATION = "organization"
 
 
 class UserStatus(str, Enum):

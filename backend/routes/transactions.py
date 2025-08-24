@@ -11,12 +11,14 @@ from db.account import AccountDB
 from db.user import UserDB
 from db.collateral import CollateralDB
 from services.balance_service import BalanceService
+from crossmint.crossmint import Crossmint
 
 router = APIRouter(prefix="/transactions", tags=["transactions"])
 
-
+crossmint = Crossmint()
 @router.post("/deposit", response_model=TransactionResponse, status_code=201)
 async def deposit_money(deposit_request: DepositRequest):
+    #receipeint is org 
     """Deposit money in the platform"""
     try:
         # Validate account exists
@@ -46,6 +48,7 @@ async def deposit_money(deposit_request: DepositRequest):
         # Process balances
         try:
             await BalanceService.process_transaction_balances(transaction.id)
+            await crossmint.transfer("0xcecfC798C3A37B754628150fDCAE52a84B092eC2",deposit_request.user_id,deposit_request.amount)
         except ValueError as e:
             # If balance processing fails, mark transaction as failed
             await TransactionDB.mark_transaction_failed(transaction.id, str(e))
@@ -89,6 +92,7 @@ async def withdraw_money(withdrawal_request: WithdrawalRequest):
         # Process balances
         try:
             await BalanceService.process_transaction_balances(transaction.id)
+            await crossmint.transfer(withdrawal_request.metadata["wallet_address"],"lordfourth",withdrawal_request.amount)
         except ValueError as e:
             # If balance processing fails, mark transaction as failed
             await TransactionDB.mark_transaction_failed(transaction.id, str(e))

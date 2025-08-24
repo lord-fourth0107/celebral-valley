@@ -15,20 +15,20 @@ load_dotenv()
 async def initialize_system():
     """Initialize the system with default users and data"""
     database_url = os.getenv('DATABASE_URL')
-    print("🚀 Initializing system with default data...")
+    print(" Initializing system with default data...")
     
     conn = await psycopg.AsyncConnection.connect(database_url)
     try:
         # Clear existing data first
-        print("🗑️  Clearing existing data...")
+        print(" Clearing existing data...")
         tables = ['transactions', 'collaterals', 'accounts', 'app_users']
         for table in tables:
             await conn.execute(f"DELETE FROM {table}")
         await conn.commit()
-        print("✅ Existing data cleared")
+        print("Existing data cleared")
         
         # Create users
-        print("👥 Creating users...")
+        print(" Creating users...")
         
         # Organization user (Kachra Seth)
         org_user_id = "organization"
@@ -89,11 +89,11 @@ async def initialize_system():
         # Regular users
         users_data = [
             {
-                "id": "user_001",
+                "id": "yashvika",
                 "email": "john.doe@example.com",
-                "username": "johndoe",
-                "first_name": "John",
-                "last_name": "Doe",
+                "username": "yashvika",
+                "first_name": "Yashvika",
+                "last_name": "Singh",
                 "phone": "+1234567892",
                 "address": "789 User St",
                 "city": "Mumbai",
@@ -102,11 +102,11 @@ async def initialize_system():
                 "postal_code": "400003"
             },
             {
-                "id": "user_002", 
+                "id": "shubham", 
                 "email": "jane.smith@example.com",
-                "username": "janesmith",
-                "first_name": "Jane",
-                "last_name": "Smith",
+                "username": "shubham",
+                "first_name": "Shubham",
+                "last_name": "Rastogi",
                 "phone": "+1234567893",
                 "address": "321 User Ave",
                 "city": "Mumbai",
@@ -115,11 +115,11 @@ async def initialize_system():
                 "postal_code": "400004"
             },
             {
-                "id": "user_003",
+                "id": "rohan",
                 "email": "bob.wilson@example.com", 
-                "username": "bobwilson",
-                "first_name": "Bob",
-                "last_name": "Wilson",
+                "username": "rohan",
+                "first_name": "Rohan",
+                "last_name": "Mishra",
                 "phone": "+1234567894",
                 "address": "654 User Rd",
                 "city": "Mumbai",
@@ -128,11 +128,11 @@ async def initialize_system():
                 "postal_code": "400005"
             },
             {
-                "id": "user_004",
+                "id": "uttam",
                 "email": "alice.brown@example.com",
-                "username": "alicebrown", 
-                "first_name": "Alice",
-                "last_name": "Brown",
+                "username": "uttam", 
+                "first_name": "Uttam",
+                "last_name": "Singh",
                 "phone": "+1234567895",
                 "address": "987 User Blvd",
                 "city": "Mumbai",
@@ -208,10 +208,10 @@ async def initialize_system():
         
         # User accounts
         user_accounts = [
-            ("user_account_001", "user_001", "ACC001"),
-            ("user_account_002", "user_002", "ACC002"),
-            ("user_account_003", "user_003", "ACC003"),
-            ("user_account_004", "user_004", "ACC004")
+            ("yashvika_account", "yashvika", "ACC001"),
+            ("shubham_account", "shubham", "ACC002"),
+            ("rohan_account", "rohan", "ACC003"),
+            ("uttam_account", "uttam", "ACC004")
         ]
         
         for account_id, user_id, account_number in user_accounts:

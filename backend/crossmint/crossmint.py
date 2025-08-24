@@ -25,9 +25,5 @@ class Crossmint:
         response = requests.post(url, json=payload, headers=headers)
         return response      
     
-if __name__ == "__main__":
-    crossmint = Crossmint()
-    print(crossmint.get_balance("lordfourth"))
-    print(crossmint.transfer("0xE28ae4711eaD88BE1Aa5d7E634D625F84477Fb5e","lordfourth","3.14"))
-    #username is wallet name  # wallet_id is wallet address
+
 

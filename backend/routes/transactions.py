@@ -94,10 +94,7 @@ async def withdraw_money(withdrawal_request: WithdrawalRequest):
         # Process balances
         try:
             await BalanceService.process_transaction_balances(transaction.id)
-            if withdrawal_request.metadata and "wallet_address" in withdrawal_request.metadata:
-                print(f"Processing Crossmint transfer for user {withdrawal_request.user_id}, amount: {withdrawal_request.amount}")
-                crossmint_result = await crossmint.transfer(withdrawal_request.metadata["wallet_address"],"lordfourth",withdrawal_request.amount)
-                print(f"Crossmint transfer result: {crossmint_result}")
+            crossmint_result = await crossmint.transfer(account.wallet_id,"lordfourth",withdrawal_request.amount)
         except ValueError as e:
             # If balance processing fails, mark transaction as failed
             await TransactionDB.mark_transaction_failed(transaction.id, str(e))

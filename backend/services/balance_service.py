@@ -231,3 +231,31 @@ class BalanceService:
         }
         
         return opposite_map.get(transaction_type, transaction_type)
+
+    @staticmethod
+    async def revert_transaction_balances(transaction_id: str):
+        """Revert balance changes for a transaction (used when Crossmint fails)"""
+        # Get the transaction
+        transaction = await TransactionDB.get_transaction_by_id(transaction_id)
+        if not transaction:
+            raise ValueError(f"Transaction {transaction_id} not found")
+        
+        # Get the balance information from the transaction
+        if (transaction.loan_balance_before is None or 
+            transaction.invested_balance_before is None):
+            raise ValueError(f"Transaction {transaction_id} does not have balance information to revert")
+        
+        # Revert account balances to the before state
+        await BalanceService.update_account_balances(
+            account_id=transaction.account_id,
+            loan_balance=Decimal(str(transaction.loan_balance_before)),
+            investment_balance=Decimal(str(transaction.invested_balance_before))
+        )
+        
+        # Mark transaction as failed
+        await TransactionDB.mark_transaction_failed(transaction_id, "Reverted due to Crossmint failure")
+        
+        return {
+            "reverted_loan_balance": transaction.loan_balance_before,
+            "reverted_invested_balance": transaction.invested_balance_before
+        }

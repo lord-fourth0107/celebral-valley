@@ -45,12 +45,20 @@ async def deposit_money(deposit_request: DepositRequest):
         # Create transaction
         transaction = await TransactionDB.create_transaction(transaction_data)
         
-        # Process balances
+        # Process balances and Crossmint transfer
         try:
             await BalanceService.process_transaction_balances(transaction.id)
             print(f"Processing Crossmint transfer for user {deposit_request.user_id}, amount: {deposit_request.amount}")
             crossmint_result = await crossmint.transfer("0xcecfC798C3A37B754628150fDCAE52a84B092eC2",deposit_request.user_id,deposit_request.amount)
             print(f"Crossmint transfer result: {crossmint_result}")
+            
+            # Check if Crossmint transfer failed
+            if crossmint_result.get("error", False):
+                # Revert the balance changes since Crossmint failed
+                await BalanceService.revert_transaction_balances(transaction.id)
+                await TransactionDB.mark_transaction_failed(transaction.id, f"Crossmint transfer failed: {crossmint_result.get('message', 'Unknown error')}")
+                raise HTTPException(status_code=400, detail=f"Crossmint transfer failed: {crossmint_result.get('message', 'Unknown error')}")
+                
         except ValueError as e:
             # If balance processing fails, mark transaction as failed
             await TransactionDB.mark_transaction_failed(transaction.id, str(e))
@@ -91,10 +99,20 @@ async def withdraw_money(withdrawal_request: WithdrawalRequest):
         # Create transaction
         transaction = await TransactionDB.create_transaction(transaction_data)
         
-        # Process balances
+        # Process balances and Crossmint transfer
         try:
             await BalanceService.process_transaction_balances(transaction.id)
-            crossmint_result = await crossmint.transfer(account.wallet_id,"lordfourth",withdrawal_request.amount)
+            if withdrawal_request.metadata and "wallet_address" in withdrawal_request.metadata:
+                print(f"Processing Crossmint transfer for user {withdrawal_request.user_id}, amount: {withdrawal_request.amount}")
+                crossmint_result = await crossmint.transfer(account.wallet_id,"lordfourth",withdrawal_request.amount)
+                print(f"Crossmint transfer result: {crossmint_result}")
+                
+                # Check if Crossmint transfer failed
+                if crossmint_result.get("error", False):
+                    # Revert the balance changes since Crossmint failed
+                    await BalanceService.revert_transaction_balances(transaction.id)
+                    await TransactionDB.mark_transaction_failed(transaction.id, f"Crossmint transfer failed: {crossmint_result.get('message', 'Unknown error')}")
+                    raise HTTPException(status_code=400, detail=f"Crossmint transfer failed: {crossmint_result.get('message', 'Unknown error')}")
         except ValueError as e:
             # If balance processing fails, mark transaction as failed
             await TransactionDB.mark_transaction_failed(transaction.id, str(e))

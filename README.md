@@ -223,15 +223,6 @@ Rohan Mishra
 
 Yashavika Singh
 
-- **Backend Development**: FastAPI, PostgreSQL, AI/ML
-- **Frontend Development**: React Native, Expo
-- **AI/ML Integration**: Computer Vision, LLM APIs
-- **Blockchain**: CrossMint, NFT, Smart Contracts
-
-## 📞 Support
-
-For questions or support, please reach out to the development team or create an issue in the repository.
-
 ---
 
 **Built with ❤️ for the hackathon community** 

@@ -58,7 +58,7 @@ export default function BorrowLoansScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
-  const [useMockData] = useState(true); // Toggle this to use real API
+  const [useMockData] = useState(false); // Toggle this to use real API
 
   // Format date to readable format
   const formatDate = (dateString) => {

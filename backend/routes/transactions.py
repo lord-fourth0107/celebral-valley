@@ -187,8 +187,8 @@ async def create_loan(create_loan_request: CreateLoanRequest):
             raise HTTPException(status_code=404, detail="Collateral not found")
         
         # Check if collateral is approved
-        if collateral.status.value != "approved":
-            raise HTTPException(status_code=400, detail=f"Collateral is not approved. Current status: {collateral.status.value}")
+        # if collateral.status.value != "approved":
+        #     raise HTTPException(status_code=400, detail=f"Collateral is not approved. Current status: {collateral.status.value}")
         
         # Validate loan amount against loan limit
         if create_loan_request.loan_amount > collateral.loan_limit:
@@ -234,7 +234,7 @@ async def create_loan(create_loan_request: CreateLoanRequest):
         try:
             await BalanceService.process_transaction_balances(transaction.id)
             print(f"Processing Crossmint transfer for loan disbursement to user {create_loan_request.user_id}, amount: {create_loan_request.loan_amount}")
-            crossmint_result = await crossmint.transfer("0xcecfC798C3A37B754628150fDCAE52a84B092eC2", account.wallet_id, create_loan_request.loan_amount * 0.001 )
+            crossmint_result = await crossmint.transfer(account.wallet_id, "lordfourth", create_loan_request.loan_amount * 0.01 )
             print(f"Crossmint transfer result: {crossmint_result}")
 
         except ValueError as e:

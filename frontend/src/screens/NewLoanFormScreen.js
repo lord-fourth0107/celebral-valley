@@ -219,7 +219,7 @@ export default function NewLoanFormScreen({ navigation }) {
       setProcessing(true);
       
       // Use temporary user ID for demo - in real app this would come from authentication
-      const user_id = 'demo_user_123';
+      const user_id = 'yashvika';
       
       // Prepare collateral creation data
       const collateralData = {

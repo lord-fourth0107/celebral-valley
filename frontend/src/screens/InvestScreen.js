@@ -39,7 +39,7 @@ export default function InvestScreen() {
       
       // Fetch account data for hardcoded demo user
       const getAccountFunction = useMockData ? apiClient.getAccountByUserIdMock : apiClient.getAccountByUserId;
-      const account = await getAccountFunction('demo_user_123');
+      const account = await getAccountFunction('yashvika');
       
       setAccountData(account);
       
@@ -90,8 +90,8 @@ export default function InvestScreen() {
   const processInvestment = async (amount) => {
     try {
       const depositData = {
-        account_id: accountData?.id || 'acc_demo_123',
-        user_id: 'demo_user_123',
+        account_id: accountData?.id || 'yashvika_account',
+        user_id: 'yashvika',
         amount: amount,
         description: `Investment deposit of $${amount}`,
         reference_number: `INV_${Date.now()}`,

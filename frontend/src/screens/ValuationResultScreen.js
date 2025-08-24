@@ -112,8 +112,8 @@ export default function ValuationResultScreen({ navigation, route }) {
       
       // Prepare loan data with hardcoded account values
       const loanData = {
-        account_id: 'acc_demo_123', // Hardcoded demo account
-        user_id: 'demo_user_123', // Hardcoded demo user
+        account_id: 'yashvika_account', // Hardcoded demo account
+        user_id: 'yashvika', // Hardcoded demo user
         collateral_id: valuationResult.collateralId || collateral?.id || 'mock_collateral',
         loan_amount: amount,
         description: `Loan against ${valuationResult.itemName}`,

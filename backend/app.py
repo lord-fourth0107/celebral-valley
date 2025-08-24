@@ -60,7 +60,7 @@ async def health_check():
 async def startup_event():
     """Initialize database connections on startup"""
     ...
-    # await db_manager.initialize()
+    await db_manager.initialize()
 
 @app.on_event("shutdown") 
 async def shutdown_event():

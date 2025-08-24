@@ -81,19 +81,29 @@ export default function BorrowLoansScreen({ navigation }) {
 
   // Transform API response to screen format
   const transformCollateral = (collateral) => {
+    // Map backend status to frontend status
+    let frontendStatus = 'pending';
+    if (collateral.status === 'approved') {
+      frontendStatus = 'active';
+    } else if (collateral.status === 'repaid' || collateral.status === 'closed') {
+      frontendStatus = 'repaid';
+    }
+
     const base = {
       id: collateral.id,
-      itemEmoji: collateral.item_emoji || '📦',
-      itemName: collateral.item_name,
-      loanAmount: collateral.loan_amount,
-      status: collateral.status
+      itemEmoji: getItemEmoji(collateral.metadata?.name || collateral.item_name),
+      itemName: collateral.metadata?.name || collateral.item_name || 'Unknown Item',
+      loanAmount: parseFloat(collateral.loan_amount) || 0,
+      status: frontendStatus,
+      estimatedValue: collateral.metadata?.total_estimated_value || collateral.metadata?.estimated_value || 0,
+      interestRate: parseFloat(collateral.interest) * 100 || 0
     };
 
-    if (collateral.status === 'active') {
+    if (frontendStatus === 'active') {
       return {
         ...base,
         dueDate: formatDate(collateral.due_date),
-        daysRemaining: collateral.days_remaining || calculateDaysRemaining(collateral.due_date)
+        daysRemaining: calculateDaysRemaining(collateral.due_date)
       };
     } else {
       return {
@@ -102,6 +112,21 @@ export default function BorrowLoansScreen({ navigation }) {
         status: 'Repaid'
       };
     }
+  };
+
+  // Helper function to get emoji based on item name
+  const getItemEmoji = (itemName) => {
+    if (!itemName) return '📦';
+    
+    const name = itemName.toLowerCase();
+    if (name.includes('watch') || name.includes('rolex')) return '⌚';
+    if (name.includes('phone') || name.includes('iphone')) return '📱';
+    if (name.includes('laptop') || name.includes('macbook')) return '💻';
+    if (name.includes('headphone') || name.includes('earphone')) return '🎧';
+    if (name.includes('shoe') || name.includes('nike')) return '👟';
+    if (name.includes('ring') || name.includes('jewelry')) return '💍';
+    if (name.includes('necklace')) return '📿';
+    return '📦';
   };
 
   // Fetch collaterals from API
@@ -114,6 +139,7 @@ export default function BorrowLoansScreen({ navigation }) {
         apiClient.listCollateralsMock : 
         apiClient.listCollaterals;
       
+      // For now, fetch all collaterals. In production, this should filter by user_id
       const response = await fetchFunction({ status: 'all' });
       
       // Separate active and past loans
@@ -122,11 +148,12 @@ export default function BorrowLoansScreen({ navigation }) {
       
       response.collaterals.forEach(collateral => {
         const transformed = transformCollateral(collateral);
-        if (collateral.status === 'active') {
+        if (transformed.status === 'active') {
           active.push(transformed);
-        } else {
+        } else if (transformed.status === 'Repaid') {
           past.push(transformed);
         }
+        // Skip pending collaterals for now
       });
       
       setActiveLoans(active);

@@ -630,60 +630,77 @@ export const listCollateralsMock = async (params = {}) => {
   const mockCollaterals = [
     {
       id: '1',
-      item_name: 'iPhone 13 Pro',
-      item_emoji: '📱',
-      status: 'active',
-      loan_amount: 450.00,
-      due_date: '2025-02-15',
-      days_remaining: 22,
-      interest_rate: 12,
-      estimated_value: 750.00,
-      created_at: '2025-01-15T10:00:00Z'
+      metadata: {
+        name: 'Luxury Rolex Watch',
+        total_estimated_value: 12500.0
+      },
+      status: 'approved',
+      loan_amount: '7000.00',
+      due_date: '2026-08-24T01:20:42.116648',
+      interest: '0.1200',
+      created_at: '2025-08-24T05:20:42.116820'
     },
     {
       id: '2',
-      item_name: 'MacBook Pro M1',
-      item_emoji: '💻',
-      status: 'active',
-      loan_amount: 1200.00,
-      due_date: '2025-02-20',
-      days_remaining: 27,
-      interest_rate: 10,
-      estimated_value: 2000.00,
-      created_at: '2025-01-10T14:30:00Z'
+      metadata: {
+        name: 'Diamond Ring',
+        total_estimated_value: 1500.0
+      },
+      status: 'approved',
+      loan_amount: '1.00',
+      due_date: '2025-11-22T04:40:56.748478',
+      interest: '0.0550',
+      created_at: '2025-08-24T04:40:56.748478'
     },
     {
       id: '3',
-      item_name: 'Gold Watch',
-      item_emoji: '⌚',
-      status: 'past',
-      loan_amount: 300.00,
-      due_date: '2024-12-30',
-      days_remaining: 0,
-      interest_rate: 15,
-      estimated_value: 500.00,
-      created_at: '2024-11-30T09:15:00Z',
-      closed_at: '2024-12-28T16:45:00Z'
+      metadata: {
+        name: 'Silver Ring',
+        total_estimated_value: 800.0
+      },
+      status: 'approved',
+      loan_amount: '2.00',
+      due_date: '2025-11-22T03:16:38.901050',
+      interest: '0.0550',
+      created_at: '2025-08-24T03:16:38.901050'
     },
     {
       id: '4',
-      item_name: 'Diamond Ring',
-      item_emoji: '💍',
-      status: 'past',
-      loan_amount: 800.00,
-      due_date: '2024-11-15',
-      days_remaining: 0,
-      interest_rate: 8,
-      estimated_value: 1500.00,
-      created_at: '2024-10-15T11:20:00Z',
-      closed_at: '2024-11-14T13:30:00Z'
+      metadata: {
+        name: 'Gold Necklace',
+        total_estimated_value: 1200.0
+      },
+      status: 'approved',
+      loan_amount: '2.00',
+      due_date: '2025-11-22T03:04:46.514633',
+      interest: '0.0550',
+      created_at: '2025-08-24T03:04:46.514633'
+    },
+    {
+      id: '5',
+      metadata: {
+        name: 'Headphones',
+        total_estimated_value: 150.0
+      },
+      status: 'pending',
+      loan_amount: '5000.00',
+      due_date: '2026-08-24T08:40:37.745885',
+      interest: '0.1200',
+      created_at: '2025-08-24T12:40:37.746257'
     }
   ];
   
   // Filter by status if provided
   let filteredCollaterals = mockCollaterals;
   if (params.status && params.status !== 'all') {
-    filteredCollaterals = mockCollaterals.filter(c => c.status === params.status);
+    // Map frontend status to backend status
+    let backendStatus = params.status;
+    if (params.status === 'active') {
+      backendStatus = 'approved';
+    } else if (params.status === 'past') {
+      backendStatus = 'repaid';
+    }
+    filteredCollaterals = mockCollaterals.filter(c => c.status === backendStatus);
   }
   
   // Apply pagination

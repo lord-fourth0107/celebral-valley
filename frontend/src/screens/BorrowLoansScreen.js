@@ -32,9 +32,13 @@ const LoanCard = ({ loan, onPayNow }) => (
     )}
     <View style={styles.statusRow}>
       <Text style={[styles.status, 
-        loan.status === 'active' ? styles.activeStatus : styles.paidStatus
+        loan.status === 'active' ? styles.activeStatus : 
+        loan.status === 'rejected' ? styles.rejectedStatus :
+        loan.status === 'defaulted' ? styles.defaultedStatus :
+        loan.status === 'repaid' ? styles.paidStatus :
+        styles.pendingStatus
       ]}>
-        Status: {loan.status === 'active' ? 'Active' : loan.status}
+        Status: {loan.displayStatus || loan.status}
       </Text>
       {loan.status === 'active' && (
         <TouchableOpacity 
@@ -42,6 +46,14 @@ const LoanCard = ({ loan, onPayNow }) => (
           onPress={() => onPayNow(loan.id)}
         >
           <Text style={styles.payButtonText}>Pay Now</Text>
+        </TouchableOpacity>
+      )}
+      {loan.status === 'pending' && (
+        <TouchableOpacity 
+          style={[styles.payButton, styles.pendingButton]}
+          onPress={() => onPendingAction(loan.id)}
+        >
+          <Text style={styles.payButtonText}>View Details</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -83,10 +95,23 @@ export default function BorrowLoansScreen({ navigation }) {
   const transformCollateral = (collateral) => {
     // Map backend status to frontend status
     let frontendStatus = 'pending';
+    let displayStatus = 'Pending';
+    
     if (collateral.status === 'approved') {
       frontendStatus = 'active';
+      displayStatus = 'Active';
+    } else if (collateral.status === 'rejected') {
+      frontendStatus = 'rejected';
+      displayStatus = 'Rejected';
+    } else if (collateral.status === 'defaulted') {
+      frontendStatus = 'defaulted';
+      displayStatus = 'Defaulted';
     } else if (collateral.status === 'repaid' || collateral.status === 'closed') {
       frontendStatus = 'repaid';
+      displayStatus = 'Repaid';
+    } else if (collateral.status === 'pending') {
+      frontendStatus = 'pending';
+      displayStatus = 'Pending';
     }
 
     const base = {
@@ -95,6 +120,7 @@ export default function BorrowLoansScreen({ navigation }) {
       itemName: collateral.metadata?.name || collateral.item_name || 'Unknown Item',
       loanAmount: parseFloat(collateral.loan_amount) || 0,
       status: frontendStatus,
+      displayStatus: displayStatus,
       estimatedValue: collateral.metadata?.total_estimated_value || collateral.metadata?.estimated_value || 0,
       interestRate: parseFloat(collateral.interest) * 100 || 0
     };
@@ -105,12 +131,15 @@ export default function BorrowLoansScreen({ navigation }) {
         dueDate: formatDate(collateral.due_date),
         daysRemaining: calculateDaysRemaining(collateral.due_date)
       };
-    } else {
+    } else if (frontendStatus === 'repaid') {
       return {
         ...base,
         closedDate: formatDate(collateral.closed_at || collateral.due_date),
-        status: 'Repaid'
+        displayStatus: 'Repaid'
       };
+    } else {
+      // For pending, rejected, defaulted - return base without additional fields
+      return base;
     }
   };
 
@@ -147,13 +176,20 @@ export default function BorrowLoansScreen({ navigation }) {
       const past = [];
       
       response.collaterals.forEach(collateral => {
+        console.log('Raw collateral data:', collateral); // Debug log
         const transformed = transformCollateral(collateral);
+        console.log('Transformed collateral:', transformed); // Debug log
         if (transformed.status === 'active') {
           active.push(transformed);
-        } else if (transformed.status === 'Repaid') {
+        } else if (transformed.status === 'repaid') {
+          past.push(transformed);
+        } else if (transformed.status === 'pending') {
+          // Add pending collaterals to active view for now
+          active.push(transformed);
+        } else if (transformed.status === 'rejected' || transformed.status === 'defaulted') {
+          // Add rejected/defaulted to past view
           past.push(transformed);
         }
-        // Skip pending collaterals for now
       });
       
       setActiveLoans(active);
@@ -197,6 +233,23 @@ export default function BorrowLoansScreen({ navigation }) {
           onPress: () => {
             // TODO: Implement payment flow
             Alert.alert('Payment', 'Payment processing would be implemented here.');
+          }
+        }
+      ]
+    );
+  };
+
+  const handlePendingAction = async (loanId) => {
+    Alert.alert(
+      'Pending Loan',
+      'This loan is pending approval. You can view details or contact support.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'View Details',
+          onPress: () => {
+            // TODO: Navigate to loan details screen
+            Alert.alert('Details', 'Loan details screen would open here.');
           }
         }
       ]
@@ -484,6 +537,15 @@ const styles = StyleSheet.create({
   activeStatus: {
     color: '#ff6b35',
   },
+  pendingStatus: {
+    color: '#FF9800',
+  },
+  rejectedStatus: {
+    color: '#F44336',
+  },
+  defaultedStatus: {
+    color: '#9C27B0',
+  },
   paidStatus: {
     color: '#4CAF50',
   },
@@ -492,6 +554,9 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     paddingHorizontal: 12,
     paddingVertical: 6,
+  },
+  pendingButton: {
+    backgroundColor: '#FF9800',
   },
   payButtonText: {
     color: 'white',

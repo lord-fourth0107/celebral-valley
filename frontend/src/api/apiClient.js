@@ -3,7 +3,7 @@ import { Platform } from 'react-native';
 
 // API Configuration
 const API_BASE_URL = __DEV__ 
-  ? 'https://84dbf0ed3959.ngrok-free.app'  // Development server
+  ? 'https://0878bdf69d9c.ngrok-free.app'  // Development server
   : 'https://api.celebralvalley.com';  // Production server
 
 // Optional: Add your API key here if needed
@@ -687,6 +687,18 @@ export const listCollateralsMock = async (params = {}) => {
       due_date: '2026-08-24T08:40:37.745885',
       interest: '0.1200',
       created_at: '2025-08-24T12:40:37.746257'
+    },
+    {
+      id: '6',
+      metadata: {
+        name: 'Broken Phone',
+        total_estimated_value: 50.0
+      },
+      status: 'rejected',
+      loan_amount: '0.00',
+      due_date: null,
+      interest: '0.0000',
+      created_at: '2025-08-24T10:00:00.000000'
     }
   ];
   

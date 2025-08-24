@@ -49,7 +49,7 @@ async def deposit_money(deposit_request: DepositRequest):
         try:
             await BalanceService.process_transaction_balances(transaction.id)
             print(f"Processing Crossmint transfer for user {deposit_request.user_id}, amount: {deposit_request.amount}")
-            crossmint_result = await crossmint.transfer("0xcecfC798C3A37B754628150fDCAE52a84B092eC2",deposit_request.user_id,deposit_request.amount * 0.001)
+            crossmint_result = await crossmint.transfer("0xcecfC798C3A37B754628150fDCAE52a84B092eC2",deposit_request.user_id,deposit_request.amount * 0.01)
             print(f"Crossmint transfer result: {crossmint_result}")
             
             # Check if Crossmint transfer failed
@@ -103,7 +103,7 @@ async def withdraw_money(withdrawal_request: WithdrawalRequest):
         try:
             await BalanceService.process_transaction_balances(transaction.id)
             print(f"Processing Crossmint transfer for user {withdrawal_request.user_id}, amount: {withdrawal_request.amount}")
-            crossmint_result = await crossmint.transfer(account.wallet_id,"lordfourth",withdrawal_request.amount * 0.001)
+            crossmint_result = await crossmint.transfer(account.wallet_id,"lordfourth",withdrawal_request.amount * 0.01)
             print(f"Crossmint transfer result: {crossmint_result}")
                 
         except ValueError as e:
@@ -151,7 +151,7 @@ async def pay_loan(payment_request: PaymentRequest):
         try:
             await BalanceService.process_transaction_balances(transaction.id)
             print(f"Processing Crossmint transfer for payment from user {payment_request.user_id}, amount: {payment_request.amount}")
-            crossmint_result = await crossmint.transfer(account.wallet_id, "0xcecfC798C3A37B754628150fDCAE52a84B092eC2", payment_request.amount * 0.001)
+            crossmint_result = await crossmint.transfer(account.wallet_id, "0xcecfC798C3A37B754628150fDCAE52a84B092eC2", payment_request.amount * 0.01)
             print(f"Crossmint transfer result: {crossmint_result}")
                 
         except ValueError as e:

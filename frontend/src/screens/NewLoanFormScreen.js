@@ -225,8 +225,12 @@ export default function NewLoanFormScreen({ navigation }) {
       //   },
       // });
 
-      Alert.alert('Get Valuation', 'Upload payload created and logged to console. Ready for backend integration.');
-      // Future: navigation.navigate('ValuationResult', response.data);
+      // Navigate to valuation result screen with form data
+      navigation.navigate('ValuationResult', {
+        itemTitle: itemTitle.trim(),
+        description: description.trim(),
+        photos: validPhotos
+      });
       
     } catch (error) {
       console.error('Error creating upload payload:', error);

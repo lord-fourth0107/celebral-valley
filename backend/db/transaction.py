@@ -7,6 +7,7 @@ This module handles all database operations related to transactions.
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 import uuid
+import json
 
 from dataModels.transaction import (
     Transaction, TransactionCreate, TransactionUpdate, TransactionSearchParams,
@@ -28,8 +29,9 @@ class TransactionDB:
             INSERT INTO transactions (
                 id, account_id, user_id, transaction_type, status, amount, 
                 description, reference_number, collateral_id, metadata,
+                loan_balance_before, loan_balance_after, invested_balance_before, invested_balance_after,
                 created_at, updated_at
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """
         
         params = (
@@ -42,7 +44,11 @@ class TransactionDB:
             transaction_data.description,
             transaction_data.reference_number,
             transaction_data.collateral_id,
-            transaction_data.metadata,
+            json.dumps(transaction_data.metadata) if transaction_data.metadata else None,
+            transaction_data.loan_balance_before,
+            transaction_data.loan_balance_after,
+            transaction_data.invested_balance_before,
+            transaction_data.invested_balance_after,
             now,
             now
         )
@@ -77,6 +83,10 @@ class TransactionDB:
             if not row:
                 return None
             
+            # Parse JSON fields
+            if row['metadata'] and isinstance(row['metadata'], str):
+                row['metadata'] = json.loads(row['metadata'])
+            
             return Transaction(**row)
 
     @staticmethod
@@ -96,7 +106,15 @@ class TransactionDB:
         async with db_manager.get_connection() as conn:
             cursor = await conn.execute(query, (account_id,))
             rows = await cursor.fetchall()
-            return [Transaction(**row) for row in rows]
+            
+            transactions = []
+            for row in rows:
+                # Parse JSON fields
+                if row['metadata'] and isinstance(row['metadata'], str):
+                    row['metadata'] = json.loads(row['metadata'])
+                transactions.append(Transaction(**row))
+            
+            return transactions
 
     @staticmethod
     async def get_transactions_by_user_id(user_id: str) -> List[Transaction]:
@@ -115,7 +133,15 @@ class TransactionDB:
         async with db_manager.get_connection() as conn:
             cursor = await conn.execute(query, (user_id,))
             rows = await cursor.fetchall()
-            return [Transaction(**row) for row in rows]
+            
+            transactions = []
+            for row in rows:
+                # Parse JSON fields
+                if row['metadata'] and isinstance(row['metadata'], str):
+                    row['metadata'] = json.loads(row['metadata'])
+                transactions.append(Transaction(**row))
+            
+            return transactions
 
     @staticmethod
     async def get_transactions_by_type(transaction_type: TransactionType) -> List[Transaction]:
@@ -134,7 +160,15 @@ class TransactionDB:
         async with db_manager.get_connection() as conn:
             cursor = await conn.execute(query, (transaction_type.value,))
             rows = await cursor.fetchall()
-            return [Transaction(**row) for row in rows]
+            
+            transactions = []
+            for row in rows:
+                # Parse JSON fields
+                if row['metadata'] and isinstance(row['metadata'], str):
+                    row['metadata'] = json.loads(row['metadata'])
+                transactions.append(Transaction(**row))
+            
+            return transactions
 
     @staticmethod
     async def update_transaction(transaction_id: str, transaction_data: TransactionUpdate) -> Optional[Transaction]:
@@ -243,7 +277,13 @@ class TransactionDB:
             
             cursor = await conn.execute(data_query, values + [search_params.page_size, offset])
             rows = await cursor.fetchall()
-            transactions = [Transaction(**row) for row in rows]
+            
+            transactions = []
+            for row in rows:
+                # Parse JSON fields
+                if row['metadata'] and isinstance(row['metadata'], str):
+                    row['metadata'] = json.loads(row['metadata'])
+                transactions.append(Transaction(**row))
             
             return {
                 "transactions": transactions,
@@ -346,3 +386,53 @@ class TransactionDB:
                 summary["by_status"][status]["amount"] += amount
             
             return summary
+
+    @staticmethod
+    async def update_transaction_balances(
+        transaction_id: str, 
+        loan_balance_before: float = None, 
+        loan_balance_after: float = None,
+        invested_balance_before: float = None, 
+        invested_balance_after: float = None
+    ) -> Optional[Transaction]:
+        """Update transaction balance fields"""
+        update_fields = []
+        values = []
+        
+        if loan_balance_before is not None:
+            update_fields.append("loan_balance_before = %s")
+            values.append(loan_balance_before)
+            
+        if loan_balance_after is not None:
+            update_fields.append("loan_balance_after = %s")
+            values.append(loan_balance_after)
+            
+        if invested_balance_before is not None:
+            update_fields.append("invested_balance_before = %s")
+            values.append(invested_balance_before)
+            
+        if invested_balance_after is not None:
+            update_fields.append("invested_balance_after = %s")
+            values.append(invested_balance_after)
+        
+        if not update_fields:
+            return await TransactionDB.get_transaction_by_id(transaction_id)
+        
+        # Add updated_at field
+        update_fields.append("updated_at = %s")
+        values.append(datetime.utcnow())
+        
+        # Add transaction_id for WHERE clause
+        values.append(transaction_id)
+        
+        query = f"""
+            UPDATE transactions 
+            SET {', '.join(update_fields)}
+            WHERE id = %s
+        """
+        
+        async with db_manager.get_connection() as conn:
+            await conn.execute(query, values)
+            await conn.commit()
+        
+        return await TransactionDB.get_transaction_by_id(transaction_id)

@@ -4,43 +4,53 @@ from typing import List, Optional
 from dataModels.transaction import (
     Transaction, TransactionCreate, TransactionUpdate, TransactionResponse, 
     TransactionListResponse, TransactionSearchParams, TransactionType, TransactionStatus,
-    InvestRequest, WithdrawRequest, PayLoanRequest, ExtendLoanRequest
+    DepositRequest, WithdrawalRequest, PaymentRequest, ExtendLoanRequest, CreateLoanRequest
 )
 from db.transaction import TransactionDB
 from db.account import AccountDB
 from db.user import UserDB
+from db.collateral import CollateralDB
+from services.balance_service import BalanceService
 
 router = APIRouter(prefix="/transactions", tags=["transactions"])
 
 
-@router.post("/invest", response_model=TransactionResponse, status_code=201)
-async def invest_money(invest_request: InvestRequest):
-    """Invest money in the platform"""
+@router.post("/deposit", response_model=TransactionResponse, status_code=201)
+async def deposit_money(deposit_request: DepositRequest):
+    """Deposit money in the platform"""
     try:
         # Validate account exists
-        account = await AccountDB.get_account_by_id(invest_request.account_id)
+        account = await AccountDB.get_account_by_id(deposit_request.account_id)
         if not account:
             raise HTTPException(status_code=404, detail="Account not found")
         
         # Validate user exists
-        user = await UserDB.get_user_by_id(invest_request.user_id)
+        user = await UserDB.get_user_by_id(deposit_request.user_id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         
         # Create transaction data
         transaction_data = TransactionCreate(
-            account_id=invest_request.account_id,
-            user_id=invest_request.user_id,
-            transaction_type=TransactionType.INVEST,
-            amount=invest_request.amount,
-            description=invest_request.description or f"Investment of ${invest_request.amount}",
-            reference_number=invest_request.reference_number,
-            metadata=invest_request.metadata
+            account_id=deposit_request.account_id,
+            user_id=deposit_request.user_id,
+            transaction_type=TransactionType.DEPOSIT,
+            amount=deposit_request.amount,
+            description=deposit_request.description or f"Deposit of ${deposit_request.amount}",
+            reference_number=deposit_request.reference_number,
+            metadata=deposit_request.metadata
         )
         
-        # TODO: Add business logic here (e.g., check available balance, update account balances)
-        
+        # Create transaction
         transaction = await TransactionDB.create_transaction(transaction_data)
+        
+        # Process balances
+        try:
+            await BalanceService.process_transaction_balances(transaction.id)
+        except ValueError as e:
+            # If balance processing fails, mark transaction as failed
+            await TransactionDB.mark_transaction_failed(transaction.id, str(e))
+            raise HTTPException(status_code=400, detail=str(e))
+        
         return transaction
     except HTTPException:
         raise
@@ -48,34 +58,42 @@ async def invest_money(invest_request: InvestRequest):
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
-@router.post("/withdraw", response_model=TransactionResponse, status_code=201)
-async def withdraw_money(withdraw_request: WithdrawRequest):
+@router.post("/withdrawal", response_model=TransactionResponse, status_code=201)
+async def withdraw_money(withdrawal_request: WithdrawalRequest):
     """Withdraw money from the platform"""
     try:
         # Validate account exists
-        account = await AccountDB.get_account_by_id(withdraw_request.account_id)
+        account = await AccountDB.get_account_by_id(withdrawal_request.account_id)
         if not account:
             raise HTTPException(status_code=404, detail="Account not found")
         
         # Validate user exists
-        user = await UserDB.get_user_by_id(withdraw_request.user_id)
+        user = await UserDB.get_user_by_id(withdrawal_request.user_id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         
         # Create transaction data
         transaction_data = TransactionCreate(
-            account_id=withdraw_request.account_id,
-            user_id=withdraw_request.user_id,
-            transaction_type=TransactionType.WITHDRAW,
-            amount=withdraw_request.amount,
-            description=withdraw_request.description or f"Withdrawal of ${withdraw_request.amount}",
-            reference_number=withdraw_request.reference_number,
-            metadata=withdraw_request.metadata
+            account_id=withdrawal_request.account_id,
+            user_id=withdrawal_request.user_id,
+            transaction_type=TransactionType.WITHDRAWAL,
+            amount=withdrawal_request.amount,
+            description=withdrawal_request.description or f"Withdrawal of ${withdrawal_request.amount}",
+            reference_number=withdrawal_request.reference_number,
+            metadata=withdrawal_request.metadata
         )
         
-        # TODO: Add business logic here (e.g., check available balance, update account balances)
-        
+        # Create transaction
         transaction = await TransactionDB.create_transaction(transaction_data)
+        
+        # Process balances
+        try:
+            await BalanceService.process_transaction_balances(transaction.id)
+        except ValueError as e:
+            # If balance processing fails, mark transaction as failed
+            await TransactionDB.mark_transaction_failed(transaction.id, str(e))
+            raise HTTPException(status_code=400, detail=str(e))
+        
         return transaction
     except HTTPException:
         raise
@@ -83,35 +101,43 @@ async def withdraw_money(withdraw_request: WithdrawRequest):
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
-@router.post("/pay-loan", response_model=TransactionResponse, status_code=201)
-async def pay_loan(pay_loan_request: PayLoanRequest):
+@router.post("/payment", response_model=TransactionResponse, status_code=201)
+async def pay_loan(payment_request: PaymentRequest):
     """Pay back a loan"""
     try:
         # Validate account exists
-        account = await AccountDB.get_account_by_id(pay_loan_request.account_id)
+        account = await AccountDB.get_account_by_id(payment_request.account_id)
         if not account:
             raise HTTPException(status_code=404, detail="Account not found")
         
         # Validate user exists
-        user = await UserDB.get_user_by_id(pay_loan_request.user_id)
+        user = await UserDB.get_user_by_id(payment_request.user_id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         
         # Create transaction data
         transaction_data = TransactionCreate(
-            account_id=pay_loan_request.account_id,
-            user_id=pay_loan_request.user_id,
-            transaction_type=TransactionType.PAY_LOAN,
-            amount=pay_loan_request.amount,
-            description=pay_loan_request.description or f"Loan payment of ${pay_loan_request.amount}",
-            reference_number=pay_loan_request.reference_number,
-            collateral_id=pay_loan_request.collateral_id,
-            metadata=pay_loan_request.metadata
+            account_id=payment_request.account_id,
+            user_id=payment_request.user_id,
+            transaction_type=TransactionType.PAYMENT,
+            amount=payment_request.amount,
+            description=payment_request.description or f"Loan payment of ${payment_request.amount}",
+            reference_number=payment_request.reference_number,
+            collateral_id=payment_request.collateral_id,
+            metadata=payment_request.metadata
         )
         
-        # TODO: Add business logic here (e.g., validate loan exists, check payment amount, update loan balance)
-        
+        # Create transaction
         transaction = await TransactionDB.create_transaction(transaction_data)
+        
+        # Process balances
+        try:
+            await BalanceService.process_transaction_balances(transaction.id)
+        except ValueError as e:
+            # If balance processing fails, mark transaction as failed
+            await TransactionDB.mark_transaction_failed(transaction.id, str(e))
+            raise HTTPException(status_code=400, detail=str(e))
+        
         return transaction
     except HTTPException:
         raise
@@ -121,7 +147,7 @@ async def pay_loan(pay_loan_request: PayLoanRequest):
 
 @router.post("/extend-loan", response_model=TransactionResponse, status_code=201)
 async def extend_loan(extend_loan_request: ExtendLoanRequest):
-    """Extend a loan"""
+    """Extend a loan - creates a fee transaction"""
     try:
         # Validate account exists
         account = await AccountDB.get_account_by_id(extend_loan_request.account_id)
@@ -133,26 +159,112 @@ async def extend_loan(extend_loan_request: ExtendLoanRequest):
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         
-        # Create transaction data with extension fee as amount
-        amount = extend_loan_request.fee or 0
+        # Create fee transaction data
         transaction_data = TransactionCreate(
             account_id=extend_loan_request.account_id,
             user_id=extend_loan_request.user_id,
-            transaction_type=TransactionType.EXTEND_LOAN,
-            amount=amount,
-            description=extend_loan_request.description or f"Loan extension for {extend_loan_request.extension_days} days",
+            transaction_type=TransactionType.FEE,
+            amount=extend_loan_request.fee,
+            description=extend_loan_request.description or f"Loan extension fee for {extend_loan_request.extension_days} days",
             reference_number=extend_loan_request.reference_number,
             collateral_id=extend_loan_request.collateral_id,
             metadata={
                 **(extend_loan_request.metadata or {}),
                 "extension_days": extend_loan_request.extension_days,
-                "extension_fee": str(extend_loan_request.fee) if extend_loan_request.fee else None
+                "extension_fee": str(extend_loan_request.fee),
+                "transaction_purpose": "loan_extension"
             }
         )
         
-        # TODO: Add business logic here (e.g., validate loan exists, check if extension is allowed, update loan due date)
-        
+        # Create transaction
         transaction = await TransactionDB.create_transaction(transaction_data)
+        
+        # Process balances
+        try:
+            await BalanceService.process_transaction_balances(transaction.id)
+        except ValueError as e:
+            # If balance processing fails, mark transaction as failed
+            await TransactionDB.mark_transaction_failed(transaction.id, str(e))
+            raise HTTPException(status_code=400, detail=str(e))
+        
+        return transaction
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+
+@router.post("/create-loan", response_model=TransactionResponse, status_code=201)
+async def create_loan(create_loan_request: CreateLoanRequest):
+    """Create a loan against a collateral"""
+    try:
+        # Validate account exists
+        account = await AccountDB.get_account_by_id(create_loan_request.account_id)
+        if not account:
+            raise HTTPException(status_code=404, detail="Account not found")
+        
+        # Validate user exists
+        user = await UserDB.get_user_by_id(create_loan_request.user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Validate collateral exists and is approved
+        collateral = await CollateralDB.get_collateral_by_id(create_loan_request.collateral_id)
+        if not collateral:
+            raise HTTPException(status_code=404, detail="Collateral not found")
+        
+        # Check if collateral is approved
+        if collateral.status.value != "approved":
+            raise HTTPException(status_code=400, detail=f"Collateral is not approved. Current status: {collateral.status.value}")
+        
+        # Validate loan amount against loan limit
+        if create_loan_request.loan_amount > collateral.loan_limit:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Loan amount ${create_loan_request.loan_amount} exceeds the loan limit of ${collateral.loan_limit}"
+            )
+        
+        # Check if organization has sufficient balance to disburse the loan
+        org_account = await AccountDB.get_organization_account()
+        if not org_account:
+            raise HTTPException(status_code=500, detail="Organization account not found")
+        
+        if org_account.investment_balance < create_loan_request.loan_amount:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Insufficient organization balance. Available: ${org_account.investment_balance}, Required: ${create_loan_request.loan_amount}"
+            )
+        
+        # Create loan disbursement transaction
+        transaction_data = TransactionCreate(
+            account_id=create_loan_request.account_id,
+            user_id=create_loan_request.user_id,
+            transaction_type=TransactionType.LOAN_DISBURSEMENT,
+            amount=create_loan_request.loan_amount,
+            description=create_loan_request.description or f"Loan disbursement for collateral {create_loan_request.collateral_id}",
+            reference_number=create_loan_request.reference_number,
+            collateral_id=create_loan_request.collateral_id,
+            metadata={
+                **(create_loan_request.metadata or {}),
+                "loan_amount": str(create_loan_request.loan_amount),
+                "loan_limit": str(collateral.loan_limit),
+                "interest_rate": str(collateral.interest),
+                "due_date": collateral.due_date.isoformat(),
+                "transaction_purpose": "loan_creation"
+            }
+        )
+        
+        # Create transaction
+        transaction = await TransactionDB.create_transaction(transaction_data)
+        
+        # Process balances
+        try:
+            await BalanceService.process_transaction_balances(transaction.id)
+        except ValueError as e:
+            # If balance processing fails, mark transaction as failed
+            await TransactionDB.mark_transaction_failed(transaction.id, str(e))
+            raise HTTPException(status_code=400, detail=str(e))
+        
         return transaction
     except HTTPException:
         raise

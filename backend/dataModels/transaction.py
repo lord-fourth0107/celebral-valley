@@ -7,14 +7,13 @@ from decimal import Decimal
 
 class TransactionType(str, Enum):
     # Investment transactions
-    INVEST = "invest"                      # Debit - Money invested in platform
-    WITHDRAW = "withdraw"                  # Credit - Money withdrawn from platform
-    INTEREST = "interest"                  # Credit - Interest earned on investment
+    DEPOSIT = "deposit"                      # Debit - Money invested in platform
+    WITHDRAWAL = "withdrawal"                # Credit - Money withdrawn from platform
+    INTEREST = "interest"                    # Credit - Interest earned on investment
     
     # Loan transactions
     LOAN_DISBURSEMENT = "loan_disbursement"  # Credit - Loan amount disbursed to borrower
-    PAY_LOAN = "pay_loan"                    # Debit - Loan payment made by borrower
-    EXTEND_LOAN = "extend_loan"              # Modify - Loan extension/modification
+    PAYMENT = "payment"                      # Debit - Loan payment made by borrower
     FEE = "fee"                             # Debit - Various fees charged
 
 
@@ -40,7 +39,10 @@ class TransactionBase(BaseModel):
 
 class TransactionCreate(TransactionBase):
     """Model for creating a new transaction"""
-    pass
+    loan_balance_before: Optional[Decimal] = Field(None, title="Loan Balance Before", description="Loan balance before transaction")
+    loan_balance_after: Optional[Decimal] = Field(None, title="Loan Balance After", description="Loan balance after transaction")
+    invested_balance_before: Optional[Decimal] = Field(None, title="Invested Balance Before", description="Invested balance before transaction")
+    invested_balance_after: Optional[Decimal] = Field(None, title="Invested Balance After", description="Invested balance after transaction")
 
 
 class TransactionUpdate(BaseModel):
@@ -97,17 +99,17 @@ class TransactionSearchParams(BaseModel):
 
 
 # Specific transaction request models
-class InvestRequest(BaseModel):
-    """Request model for investment transaction"""
-    account_id: str = Field(..., title="Account ID", description="ID of the account to invest from")
-    user_id: str = Field(..., title="User ID", description="ID of the user making the investment")
-    amount: Decimal = Field(..., title="Amount", description="Amount to invest", gt=0)
-    description: Optional[str] = Field(None, title="Description", description="Investment description")
+class DepositRequest(BaseModel):
+    """Request model for deposit transaction"""
+    account_id: str = Field(..., title="Account ID", description="ID of the account to deposit to")
+    user_id: str = Field(..., title="User ID", description="ID of the user making the deposit")
+    amount: Decimal = Field(..., title="Amount", description="Amount to deposit", gt=0)
+    description: Optional[str] = Field(None, title="Description", description="Deposit description")
     reference_number: Optional[str] = Field(None, title="Reference Number", description="External reference number")
-    metadata: Optional[dict] = Field(None, title="Metadata", description="Additional investment metadata")
+    metadata: Optional[dict] = Field(None, title="Metadata", description="Additional deposit metadata")
 
 
-class WithdrawRequest(BaseModel):
+class WithdrawalRequest(BaseModel):
     """Request model for withdrawal transaction"""
     account_id: str = Field(..., title="Account ID", description="ID of the account to withdraw from")
     user_id: str = Field(..., title="User ID", description="ID of the user making the withdrawal")
@@ -117,8 +119,8 @@ class WithdrawRequest(BaseModel):
     metadata: Optional[dict] = Field(None, title="Metadata", description="Additional withdrawal metadata")
 
 
-class PayLoanRequest(BaseModel):
-    """Request model for loan payment transaction"""
+class PaymentRequest(BaseModel):
+    """Request model for payment transaction"""
     account_id: str = Field(..., title="Account ID", description="ID of the account making the payment")
     user_id: str = Field(..., title="User ID", description="ID of the user making the payment")
     amount: Decimal = Field(..., title="Amount", description="Payment amount", gt=0)
@@ -129,12 +131,23 @@ class PayLoanRequest(BaseModel):
 
 
 class ExtendLoanRequest(BaseModel):
-    """Request model for loan extension transaction"""
+    """Request model for loan extension transaction - creates a fee transaction"""
     account_id: str = Field(..., title="Account ID", description="ID of the account extending the loan")
     user_id: str = Field(..., title="User ID", description="ID of the user extending the loan")
     collateral_id: str = Field(..., title="Collateral ID", description="ID of the collateral to extend")
     extension_days: int = Field(..., title="Extension Days", description="Number of days to extend the loan", gt=0)
-    fee: Optional[Decimal] = Field(None, title="Extension Fee", description="Fee for extending the loan")
+    fee: Decimal = Field(..., title="Extension Fee", description="Fee for extending the loan", gt=0)
     description: Optional[str] = Field(None, title="Description", description="Extension description")
     reference_number: Optional[str] = Field(None, title="Reference Number", description="External reference number")
     metadata: Optional[dict] = Field(None, title="Metadata", description="Additional extension metadata")
+
+
+class CreateLoanRequest(BaseModel):
+    """Request model for creating a loan against a collateral"""
+    account_id: str = Field(..., title="Account ID", description="ID of the account receiving the loan")
+    user_id: str = Field(..., title="User ID", description="ID of the user receiving the loan")
+    collateral_id: str = Field(..., title="Collateral ID", description="ID of the collateral to loan against")
+    loan_amount: Decimal = Field(..., title="Loan Amount", description="Amount to loan against the collateral", gt=0)
+    description: Optional[str] = Field(None, title="Description", description="Loan description")
+    reference_number: Optional[str] = Field(None, title="Reference Number", description="External reference number")
+    metadata: Optional[dict] = Field(None, title="Metadata", description="Additional loan metadata")

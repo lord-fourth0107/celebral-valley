@@ -70,7 +70,7 @@ class AccountDB:
     async def get_account_by_id(account_id: str) -> Optional[Account]:
         """Get an account by ID"""
         query = """
-            SELECT id, user_id, account_number, status, created_at, updated_at, closed_at
+            SELECT id, user_id, account_number, status, wallet_id, loan_balance, investment_balance, created_at, updated_at, closed_at
             FROM accounts 
             WHERE id = %s
         """
@@ -87,7 +87,7 @@ class AccountDB:
     async def get_account_by_user_id(user_id: str) -> Optional[Account]:
         """Get an account by user ID (one account per user)"""
         query = """
-            SELECT id, user_id, account_number, status, created_at, updated_at, closed_at
+            SELECT id, user_id, account_number, status, wallet_id, loan_balance, investment_balance, created_at, updated_at, closed_at
             FROM accounts 
             WHERE user_id = %s
         """
@@ -104,7 +104,7 @@ class AccountDB:
     async def get_account_by_account_number(account_number: str) -> Optional[Account]:
         """Get an account by account number"""
         query = """
-            SELECT id, user_id, account_number, status, created_at, updated_at, closed_at
+            SELECT id, user_id, account_number, status, wallet_id, loan_balance, investment_balance, created_at, updated_at, closed_at
             FROM accounts 
             WHERE account_number = %s
         """
@@ -203,7 +203,7 @@ class AccountDB:
             # Data query with pagination
             offset = (search_params.page - 1) * search_params.page_size
             data_query = f"""
-                SELECT id, user_id, account_number, status, created_at, updated_at, closed_at
+                SELECT id, user_id, account_number, status, wallet_id, loan_balance, investment_balance, created_at, updated_at, closed_at
                 FROM accounts 
                 {where_clause}
                 ORDER BY created_at DESC
@@ -280,3 +280,57 @@ class AccountDB:
             await conn.commit()
         
         return await AccountDB.get_account_by_id(account_id)
+
+    @staticmethod
+    async def update_account_balances(account_id: str, loan_balance: float = None, investment_balance: float = None) -> Optional[Account]:
+        """Update account balances"""
+        update_fields = []
+        values = []
+        
+        if loan_balance is not None:
+            update_fields.append("loan_balance = %s")
+            values.append(loan_balance)
+            
+        if investment_balance is not None:
+            update_fields.append("investment_balance = %s")
+            values.append(investment_balance)
+        
+        if not update_fields:
+            return await AccountDB.get_account_by_id(account_id)
+        
+        # Add updated_at field
+        update_fields.append("updated_at = %s")
+        values.append(datetime.utcnow())
+        
+        # Add account_id for WHERE clause
+        values.append(account_id)
+        
+        query = f"""
+            UPDATE accounts 
+            SET {', '.join(update_fields)}
+            WHERE id = %s
+        """
+        
+        async with db_manager.get_connection() as conn:
+            await conn.execute(query, values)
+            await conn.commit()
+        
+        return await AccountDB.get_account_by_id(account_id)
+
+    @staticmethod
+    async def get_organization_account() -> Optional[Account]:
+        """Get the organization account (assumes there's only one)"""
+        query = """
+            SELECT id, user_id, account_number, status, wallet_id, loan_balance, investment_balance, created_at, updated_at, closed_at
+            FROM accounts 
+            WHERE user_id = 'organization' OR account_number LIKE 'ORG%'
+            LIMIT 1
+        """
+        
+        async with db_manager.get_connection() as conn:
+            cursor = await conn.execute(query)
+            row = await cursor.fetchone()
+            if not row:
+                return None
+            
+            return Account(**row)

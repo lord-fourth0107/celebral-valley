@@ -20,12 +20,17 @@ class CollateralBase(BaseModel):
     loan_limit: Decimal = Field(..., title="Loan Limit", description="Maximum loan amount allowed against this collateral", gt=0)
     interest: Decimal = Field(..., title="Interest", description="Interest rate for the loan against this collateral")
     due_date: datetime = Field(..., title="Due Date", description="Due date for the collateral loan")
-    image_paths: Optional[List[str]] = Field([], title="Image Paths", description="Paths to the collateral images")
+    images: Optional[List[str]] = Field([], title="Images", description="List of image URLs/paths for the collateral")
     metadata: Optional[dict] = Field(None, title="Metadata", description="Additional collateral metadata")
 
 
+class CollateralCreateSimple(BaseModel):
+    """Simplified model for creating a new collateral - only requires user_id"""
+    user_id: str = Field(..., title="User ID", description="ID of the user who owns this collateral")
+
+
 class CollateralCreate(CollateralBase):
-    """Model for creating a new collateral"""
+    """Model for creating a new collateral with full data"""
     pass
 
 
@@ -36,8 +41,13 @@ class CollateralUpdate(BaseModel):
     interest: Optional[Decimal] = Field(None, title="Interest", description="Interest rate for the loan against this collateral")
     due_date: Optional[datetime] = Field(None, title="Due Date", description="Due date for the collateral loan")
     status: Optional[CollateralStatus] = Field(None, title="Status", description="Collateral status")
-    image_paths: Optional[List[str]] = Field(None, title="Image Paths", description="Paths to the collateral images")
+    images: Optional[List[str]] = Field(None, title="Images", description="List of image URLs/paths for the collateral")
     metadata: Optional[dict] = Field(None, title="Metadata", description="Additional collateral metadata")
+
+
+class CollateralApproveRequest(BaseModel):
+    """Request model for approving a collateral and creating a loan"""
+    loan_amount: Decimal = Field(..., title="Loan Amount", description="Amount to loan against this collateral", gt=0)
 
 
 class Collateral(CollateralBase):

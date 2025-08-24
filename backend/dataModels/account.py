@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
 from enum import Enum
+from decimal import Decimal
 import uuid
 
 
@@ -15,6 +16,7 @@ class AccountStatus(str, Enum):
 class AccountBase(BaseModel):
     """Base account model with common fields"""
     user_id: str = Field(..., title="User ID", description="ID of the user who owns this account")
+    wallet_id: Optional[str] = Field(None, title="Wallet ID", description="Internal wallet ID for ledger management")
 
 
 class AccountCreate(AccountBase):
@@ -26,6 +28,8 @@ class AccountUpdate(BaseModel):
     """Model for updating an account - all fields optional"""
     account_number: Optional[str] = Field(None, title="Account Number", description="Unique account number", min_length=1, max_length=50)
     status: Optional[AccountStatus] = Field(None, title="Status", description="Account status")
+    loan_balance: Optional[Decimal] = Field(None, title="Loan Balance", description="Current loan balance")
+    investment_balance: Optional[Decimal] = Field(None, title="Investment Balance", description="Current investment balance")
     closed_at: Optional[datetime] = Field(None, title="Closed At", description="When the account was closed")
 
 
@@ -34,6 +38,8 @@ class Account(AccountBase):
     id: str = Field(..., title="Account ID", description="Unique identifier for the account")
     account_number: str = Field(..., title="Account Number", description="Unique account number", min_length=1, max_length=50)
     status: AccountStatus = Field(default=AccountStatus.ACTIVE, title="Status", description="Account status")
+    loan_balance: Decimal = Field(default=Decimal('0.00'), title="Loan Balance", description="Current loan balance")
+    investment_balance: Decimal = Field(default=Decimal('0.00'), title="Investment Balance", description="Current investment balance")
     created_at: datetime = Field(..., title="Created At", description="Account creation timestamp")
     updated_at: datetime = Field(..., title="Updated At", description="Last update timestamp")
     closed_at: Optional[datetime] = Field(None, title="Closed At", description="When the account was closed")

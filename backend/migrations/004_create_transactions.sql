@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     id VARCHAR(255) PRIMARY KEY,
     account_id VARCHAR(255) NOT NULL,
     user_id VARCHAR(255) NOT NULL,
-    transaction_type VARCHAR(50) NOT NULL CHECK (transaction_type IN ('deposit', 'withdrawal', 'interest', 'loan_disbursement', 'payment', 'fee')),
+    transaction_type VARCHAR(50) NOT NULL CHECK (transaction_type IN ('invest', 'withdraw', 'interest', 'loan_disbursement', 'pay_loan', 'extend_loan', 'fee')),
     status VARCHAR(50) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'failed', 'cancelled', 'reversed')),
     amount DECIMAL(15,2) NOT NULL,
     description TEXT,

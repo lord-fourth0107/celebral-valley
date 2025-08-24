@@ -2,8 +2,8 @@ from fastapi import APIRouter, HTTPException, Query
 from typing import List, Optional
 
 from dataModels.collateral import (
-    Collateral, CollateralCreate, CollateralUpdate, CollateralResponse, 
-    CollateralListResponse, CollateralSearchParams, CollateralStatus
+    Collateral, CollateralCreate, CollateralCreateSimple, CollateralUpdate, CollateralResponse, 
+    CollateralListResponse, CollateralSearchParams, CollateralStatus, CollateralApproveRequest
 )
 from db.collateral import CollateralDB
 from db.user import UserDB
@@ -12,8 +12,25 @@ router = APIRouter(prefix="/collaterals", tags=["collaterals"])
 
 
 @router.post("/", response_model=CollateralResponse, status_code=201)
-async def create_collateral(collateral_data: CollateralCreate):
-    """Create a new collateral"""
+async def create_collateral_simple(collateral_data: CollateralCreateSimple):
+    """Create a new collateral with mocked data - only requires user_id"""
+    try:
+        # Validate user exists
+        user = await UserDB.get_user_by_id(collateral_data.user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        collateral = await CollateralDB.create_collateral_simple(collateral_data)
+        return collateral
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+
+@router.post("/full", response_model=CollateralResponse, status_code=201)
+async def create_collateral_full(collateral_data: CollateralCreate):
+    """Create a new collateral with full data"""
     try:
         # Validate user exists
         user = await UserDB.get_user_by_id(collateral_data.user_id)
@@ -22,6 +39,23 @@ async def create_collateral(collateral_data: CollateralCreate):
         
         collateral = await CollateralDB.create_collateral(collateral_data)
         return collateral
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+
+@router.post("/{collateral_id}/approve", response_model=CollateralResponse)
+async def approve_collateral(collateral_id: str, approve_request: CollateralApproveRequest):
+    """Approve a collateral and create a loan transaction"""
+    try:
+        # Check if collateral exists
+        existing_collateral = await CollateralDB.get_collateral_by_id(collateral_id)
+        if not existing_collateral:
+            raise HTTPException(status_code=404, detail="Collateral not found")
+        
+        approved_collateral = await CollateralDB.approve_collateral(collateral_id, approve_request)
+        return approved_collateral
     except HTTPException:
         raise
     except Exception as e:
@@ -46,6 +80,20 @@ async def list_collaterals(
         
         result = await CollateralDB.list_collaterals(search_params)
         return CollateralListResponse(**result)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+
+@router.get("/{collateral_id}", response_model=CollateralResponse)
+async def get_collateral(collateral_id: str):
+    """Get a specific collateral by ID"""
+    try:
+        collateral = await CollateralDB.get_collateral_by_id(collateral_id)
+        if not collateral:
+            raise HTTPException(status_code=404, detail="Collateral not found")
+        return collateral
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 

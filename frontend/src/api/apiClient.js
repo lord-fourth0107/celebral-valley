@@ -3,7 +3,7 @@ import { Platform } from 'react-native';
 
 // API Configuration
 const API_BASE_URL = __DEV__ 
-  ? 'https://0878bdf69d9c.ngrok-free.app'  // Development server
+  ? 'https://9abbddeea616.ngrok-free.app'  // Development server
   : 'https://api.celebralvalley.com';  // Production server
 
 // Optional: Add your API key here if needed

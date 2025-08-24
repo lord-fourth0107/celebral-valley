@@ -70,7 +70,6 @@ export default function BorrowLoansScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
-  const [useMockData] = useState(false); // Toggle this to use real API
 
   // Format date to readable format
   const formatDate = (dateString) => {
@@ -93,6 +92,15 @@ export default function BorrowLoansScreen({ navigation }) {
 
   // Transform API response to screen format
   const transformCollateral = (collateral) => {
+    console.log('🔄 Transforming collateral:', {
+      id: collateral.id,
+      status: collateral.status,
+      metadata: collateral.metadata,
+      loan_amount: collateral.loan_amount,
+      loan_limit: collateral.loan_limit,
+      name: collateral.metadata?.name
+    });
+    
     // Map backend status to frontend status
     let frontendStatus = 'pending';
     let displayStatus = 'Pending';
@@ -114,16 +122,23 @@ export default function BorrowLoansScreen({ navigation }) {
       displayStatus = 'Pending';
     }
 
+    // Get the real loan amount - use loan_limit for pending items, loan_amount for approved
+    const realLoanAmount = frontendStatus === 'active' 
+      ? parseFloat(collateral.loan_amount) || 0
+      : parseFloat(collateral.loan_limit) || 0;
+
     const base = {
       id: collateral.id,
-      itemEmoji: getItemEmoji(collateral.metadata?.name || collateral.item_name),
-      itemName: collateral.metadata?.name || collateral.item_name || 'Unknown Item',
-      loanAmount: parseFloat(collateral.loan_amount) || 0,
+      itemEmoji: getItemEmoji(collateral.metadata?.name || 'Unknown Item'),
+      itemName: collateral.metadata?.name || 'Unknown Item',
+      loanAmount: realLoanAmount,
       status: frontendStatus,
       displayStatus: displayStatus,
-      estimatedValue: collateral.metadata?.total_estimated_value || collateral.metadata?.estimated_value || 0,
+      estimatedValue: collateral.metadata?.total_estimated_value || 0,
       interestRate: parseFloat(collateral.interest) * 100 || 0
     };
+
+    console.log('✨ Transformed base:', base);
 
     if (frontendStatus === 'active') {
       return {
@@ -162,23 +177,29 @@ export default function BorrowLoansScreen({ navigation }) {
   const fetchCollaterals = async () => {
     try {
       setError(null);
+      setLoading(true);
       
-      // Use mock or real API based on toggle
-      const fetchFunction = useMockData ? 
-        apiClient.listCollateralsMock : 
-        apiClient.listCollaterals;
+      console.log('🔍 Fetching collaterals...');
       
-      // For now, fetch all collaterals. In production, this should filter by user_id
-      const response = await fetchFunction({ status: 'all' });
+      // Always use real API for now (remove mock toggle)
+      const response = await apiClient.listCollaterals({ status: 'all' });
+      
+      console.log('📡 API Response:', response);
+      
+      if (!response || !response.collaterals) {
+        console.error('❌ Invalid API response structure:', response);
+        throw new Error('Invalid response from server');
+      }
       
       // Separate active and past loans
       const active = [];
       const past = [];
       
       response.collaterals.forEach(collateral => {
-        console.log('Raw collateral data:', collateral); // Debug log
+        console.log('🔍 Processing collateral:', collateral);
         const transformed = transformCollateral(collateral);
-        console.log('Transformed collateral:', transformed); // Debug log
+        console.log('✨ Transformed to:', transformed);
+        
         if (transformed.status === 'active') {
           active.push(transformed);
         } else if (transformed.status === 'repaid') {
@@ -192,11 +213,24 @@ export default function BorrowLoansScreen({ navigation }) {
         }
       });
       
+      console.log('📊 Final results - Active:', active.length, 'Past:', past.length);
+      
       setActiveLoans(active);
       setPastLoans(past);
     } catch (err) {
-      console.error('Error fetching collaterals:', err);
-      setError('Failed to load loans. Please try again.');
+      console.error('❌ Error fetching collaterals:', err);
+      
+      // Try to get more specific error information
+      let errorMessage = 'Failed to load loans. Please try again.';
+      if (err.response) {
+        errorMessage = `Server error: ${err.response.status} - ${err.response.data?.detail || 'Unknown error'}`;
+      } else if (err.request) {
+        errorMessage = 'Network error - please check your connection';
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
       
       // Set default data on error
       setActiveLoans([]);

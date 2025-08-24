@@ -10,12 +10,14 @@ import {
   Alert,
   Image,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  ActivityIndicator
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system';
+import apiClient from '../api/apiClient';
 
 const PhotoSlot = ({ photo, onPress, onLongPress, index }) => (
   <TouchableOpacity 
@@ -36,12 +38,16 @@ const PhotoSlot = ({ photo, onPress, onLongPress, index }) => (
 
 export default function NewLoanFormScreen({ navigation }) {
   const [photos, setPhotos] = useState([null, null, null, null]);
+  const [uploadedImagePaths, setUploadedImagePaths] = useState([null, null, null, null]);
   const [itemTitle, setItemTitle] = useState('');
   const [description, setDescription] = useState('');
   const [showCamera, setShowCamera] = useState(false);
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [permission, requestPermission] = useCameraPermissions();
   const [mediaPermission, requestMediaPermission] = MediaLibrary.usePermissions();
+  const [uploading, setUploading] = useState(false);
+  const [processing, setProcessing] = useState(false);
+  const [useMockData] = useState(false); // Toggle this to use real API
 
   // Create data directory if it doesn't exist
   const ensureDataDirectory = async () => {
@@ -105,8 +111,11 @@ export default function NewLoanFormScreen({ navigation }) {
             style: 'destructive',
             onPress: () => {
               const newPhotos = [...photos];
+              const newUploadedPaths = [...uploadedImagePaths];
               newPhotos[index] = null;
+              newUploadedPaths[index] = null;
               setPhotos(newPhotos);
+              setUploadedImagePaths(newUploadedPaths);
             },
           },
         ]
@@ -117,6 +126,8 @@ export default function NewLoanFormScreen({ navigation }) {
   const takePicture = async (cameraRef) => {
     if (cameraRef.current) {
       try {
+        setUploading(true);
+        
         const photo = await cameraRef.current.takePictureAsync({
           quality: 0.7,
           base64: false,
@@ -132,9 +143,39 @@ export default function NewLoanFormScreen({ navigation }) {
           savedPath: savedPhotoPath
         };
         
+        // Update photos array
         const newPhotos = [...photos];
         newPhotos[activePhotoIndex] = photoWithSavedPath;
         setPhotos(newPhotos);
+        
+        // Upload image to backend immediately
+        try {
+          const uploadFunction = useMockData ? 
+            apiClient.uploadImageMock : 
+            apiClient.uploadImage;
+          
+          const filename = `photo_${Date.now()}_${activePhotoIndex}.jpg`;
+          const uploadResult = await uploadFunction(photo.uri, filename);
+          
+          console.log('Image uploaded successfully:', uploadResult);
+          
+          // Store the backend file path
+          const newUploadedPaths = [...uploadedImagePaths];
+          newUploadedPaths[activePhotoIndex] = uploadResult.file_path;
+          setUploadedImagePaths(newUploadedPaths);
+          
+          // Show success feedback briefly
+          Alert.alert('Success', 'Photo uploaded successfully!', [{ text: 'OK' }], { duration: 1000 });
+          
+        } catch (uploadError) {
+          console.error('Image upload failed:', uploadError);
+          Alert.alert('Upload Failed', 'Failed to upload image. Please try again.');
+          
+          // Remove the photo from UI since upload failed
+          const newPhotos = [...photos];
+          newPhotos[activePhotoIndex] = null;
+          setPhotos(newPhotos);
+        }
         
         if (mediaPermission.granted) {
           await MediaLibrary.saveToLibraryAsync(photo.uri);
@@ -143,6 +184,8 @@ export default function NewLoanFormScreen({ navigation }) {
         setShowCamera(false);
       } catch (error) {
         Alert.alert('Error', 'Failed to take picture: ' + error.message);
+      } finally {
+        setUploading(false);
       }
     }
   };
@@ -163,78 +206,54 @@ export default function NewLoanFormScreen({ navigation }) {
       return;
     }
 
+    // Check that all photos have been uploaded
+    const validPhotos = photos.filter(photo => photo !== null);
+    const validUploadedPaths = uploadedImagePaths.filter(path => path !== null);
+    
+    if (validPhotos.length !== validUploadedPaths.length) {
+      Alert.alert('Upload Error', 'Some images are still uploading. Please wait for all uploads to complete.');
+      return;
+    }
+
     try {
-      // Create FormData for backend upload
-      const formData = new FormData();
+      setProcessing(true);
       
-      // Add text fields
-      formData.append('itemTitle', itemTitle.trim());
-      formData.append('description', description.trim());
+      // Use temporary user ID for demo - in real app this would come from authentication
+      const user_id = 'demo_user_123';
       
-      // Add photos
-      const validPhotos = photos.filter(photo => photo !== null);
-      validPhotos.forEach((photo, index) => {
-        formData.append('photos', {
-          uri: photo.uri,
-          type: 'image/jpeg',
-          name: `photo_${index}.jpg`,
-        });
-      });
-      
-      // Add metadata
-      formData.append('metadata', JSON.stringify({
-        totalPhotos: validPhotos.length,
-        submittedAt: new Date().toISOString(),
-        platform: Platform.OS
-      }));
-
-      // Create readable payload for logging (since FormData isn't directly loggable)
-      const payloadForLogging = {
-        itemTitle: itemTitle.trim(),
+      // Prepare collateral creation data
+      const collateralData = {
+        user_id: user_id,
+        name: itemTitle.trim(),
         description: description.trim(),
-        photos: validPhotos.map((photo, index) => ({
-          fieldName: 'photos',
-          fileName: `photo_${index}.jpg`,
-          type: 'image/jpeg',
-          uri: photo.uri,
-          savedPath: photo.savedPath
-        })),
-        metadata: {
-          totalPhotos: validPhotos.length,
-          submittedAt: new Date().toISOString(),
-          platform: Platform.OS
-        },
-        uploadInfo: {
-          method: 'POST',
-          contentType: 'multipart/form-data',
-          fieldsCount: 3 + validPhotos.length // itemTitle + description + metadata + photos
-        }
+        images: validUploadedPaths // Use the backend file paths
       };
-
-      // Console log the payload structure
-      console.log('=== BACKEND UPLOAD PAYLOAD ===');
-      console.log(JSON.stringify(payloadForLogging, null, 2));
-      console.log('==============================');
-
-      // TODO: Upload to backend
-      // const response = await fetch('YOUR_BACKEND_URL/valuation', {
-      //   method: 'POST',
-      //   body: formData,
-      //   headers: {
-      //     'Content-Type': 'multipart/form-data',
-      //   },
-      // });
-
-      // Navigate to valuation result screen with form data
+      
+      console.log('Creating collateral with data:', collateralData);
+      
+      // Call create collateral API
+      const createFunction = useMockData ? 
+        apiClient.createCollateralMock : 
+        apiClient.createCollateral;
+      
+      const collateralResult = await createFunction(collateralData);
+      
+      console.log('Collateral created successfully:', collateralResult);
+      
+      // Navigate to valuation result screen with the collateral response
       navigation.navigate('ValuationResult', {
         itemTitle: itemTitle.trim(),
         description: description.trim(),
-        photos: validPhotos
+        photos: validPhotos,
+        collateral: collateralResult,
+        success: true
       });
       
     } catch (error) {
-      console.error('Error creating upload payload:', error);
-      Alert.alert('Error', 'Failed to prepare upload payload');
+      console.error('Error creating collateral:', error);
+      Alert.alert('Error', `Failed to create collateral: ${error.message}`);
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -306,8 +325,24 @@ export default function NewLoanFormScreen({ navigation }) {
           </View>
         </View>
 
-          <TouchableOpacity style={styles.valuationButton} onPress={handleGetValuation}>
-            <Text style={styles.valuationButtonText}> Get Valuation </Text>
+          <TouchableOpacity 
+            style={[styles.valuationButton, (processing || uploading) && styles.valuationButtonDisabled]} 
+            onPress={handleGetValuation}
+            disabled={processing || uploading}
+          >
+            {processing ? (
+              <View style={styles.buttonContent}>
+                <ActivityIndicator size="small" color="white" />
+                <Text style={styles.valuationButtonText}> Analyzing... </Text>
+              </View>
+            ) : uploading ? (
+              <View style={styles.buttonContent}>
+                <ActivityIndicator size="small" color="white" />
+                <Text style={styles.valuationButtonText}> Uploading... </Text>
+              </View>
+            ) : (
+              <Text style={styles.valuationButtonText}> Get Valuation </Text>
+            )}
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -475,10 +510,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 30,
   },
+  valuationButtonDisabled: {
+    backgroundColor: '#ccc',
+    opacity: 0.7,
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   valuationButtonText: {
     color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
+    marginLeft: 8,
   },
   cameraContainer: {
     flex: 1,

@@ -9,47 +9,88 @@ import {
   Image,
   TextInput,
   Alert,
-  Platform
+  Platform,
+  ActivityIndicator
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import * as apiClient from '../api/apiClient';
 
 export default function ValuationResultScreen({ navigation, route }) {
   // Get data from navigation params (from NewLoanForm)
-  const { itemTitle, description, photos } = route.params || {};
+  const { itemTitle, description, photos, collateral, success } = route.params || {};
   
-  // Hardcoded valuation result - simulate API response
+  // Use real collateral data or fallback to mock data
   const [valuationResult] = useState(() => {
-    // Simulate approval/rejection based on item title
-    const isApproved = !itemTitle?.toLowerCase().includes('teddy') && 
-                      !itemTitle?.toLowerCase().includes('toy');
-    
-    if (isApproved) {
-      return {
-        approved: true,
-        itemName: itemTitle || 'iPhone 13 Pro Max 256GB',
-        estimatedValue: 750,
-        maxLoanAmount: 450,
-        interestRate: 12,
-        loanTerm: '30 days',
-        dueDate: 'Jan 15, 2026',
-        extendFee: 25
-      };
+    if (collateral && success) {
+      // Use real collateral data
+      const approved = collateral.status === 'pending' || collateral.status === 'approved';
+      const metadata = collateral.metadata || {};
+      
+      if (approved) {
+        // Calculate due date from collateral data
+        const dueDate = collateral.due_date ? new Date(collateral.due_date).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        }) : 'Jan 15, 2026';
+        
+        return {
+          approved: true,
+          itemName: metadata.name || itemTitle || 'Valued Item',
+          estimatedValue: metadata.total_estimated_value || 750,
+          maxLoanAmount: collateral.loan_limit || 450,
+          interestRate: (collateral.interest || 0.12) * 100, // Convert decimal to percentage
+          loanTerm: '365 days',
+          dueDate: dueDate,
+          extendFee: 25,
+          collateralId: collateral.id
+        };
+      } else {
+        return {
+          approved: false,
+          itemName: metadata.name || itemTitle || 'Rejected Item',
+          reasons: [
+            metadata.rejection_reason || 'Low estimated value',
+            'Difficult to resell',
+            'Condition concerns'
+          ]
+        };
+      }
     } else {
-      return {
-        approved: false,
-        itemName: itemTitle || 'Used Teddy Bear',
-        reasons: [
-          'Low estimated value',
-          'Difficult to resell',
-          'Condition concerns'
-        ]
-      };
+      // Fallback to mock data logic
+      const isApproved = !itemTitle?.toLowerCase().includes('teddy') && 
+                        !itemTitle?.toLowerCase().includes('toy');
+      
+      if (isApproved) {
+        return {
+          approved: true,
+          itemName: itemTitle || 'iPhone 13 Pro Max 256GB',
+          estimatedValue: 750,
+          maxLoanAmount: 450,
+          interestRate: 12,
+          loanTerm: '30 days',
+          dueDate: 'Jan 15, 2026',
+          extendFee: 25
+        };
+      } else {
+        return {
+          approved: false,
+          itemName: itemTitle || 'Used Teddy Bear',
+          reasons: [
+            'Low estimated value',
+            'Difficult to resell',
+            'Condition concerns'
+          ]
+        };
+      }
     }
   });
 
   const [requestedAmount, setRequestedAmount] = useState('');
+  const [processing, setProcessing] = useState(false);
+  const [useMockData] = useState(false); // Toggle this to use real API
 
-  const handleProceedWithLoan = () => {
+  const handleProceedWithLoan = async () => {
     const amount = parseFloat(requestedAmount);
     if (!amount || amount <= 0) {
       Alert.alert('Invalid Amount', 'Please enter a valid loan amount');
@@ -60,16 +101,62 @@ export default function ValuationResultScreen({ navigation, route }) {
       return;
     }
 
-    Alert.alert(
-      'Loan Confirmed',
-      `Your loan of $${amount} has been approved and will be processed shortly.`,
-      [
-        {
-          text: 'OK',
-          onPress: () => navigation.navigate('BorrowLoans')
+    // Check if we have collateral data for real API call
+    if (!useMockData && (!collateral || !valuationResult.collateralId)) {
+      Alert.alert('Error', 'Unable to process loan - missing collateral information');
+      return;
+    }
+
+    try {
+      setProcessing(true);
+      
+      // Prepare loan data with hardcoded account values
+      const loanData = {
+        account_id: 'acc_demo_123', // Hardcoded demo account
+        user_id: 'demo_user_123', // Hardcoded demo user
+        collateral_id: valuationResult.collateralId || collateral?.id || 'mock_collateral',
+        loan_amount: amount,
+        description: `Loan against ${valuationResult.itemName}`,
+        reference_number: `LOAN_${Date.now()}`,
+        metadata: {
+          item_name: valuationResult.itemName,
+          requested_amount: amount,
+          max_loan_amount: valuationResult.maxLoanAmount,
+          interest_rate: valuationResult.interestRate / 100,
+          due_date: valuationResult.dueDate
         }
-      ]
-    );
+      };
+
+      // Call the appropriate API function
+      const createLoanFunction = useMockData ? apiClient.createLoanMock : apiClient.createLoan;
+      const loanResult = await createLoanFunction(loanData);
+      
+      console.log('Loan created successfully:', loanResult);
+      
+      Alert.alert(
+        'Loan Confirmed',
+        `Your loan of $${amount} has been approved and processed successfully!\n\nTransaction ID: ${loanResult.id}`,
+        [
+          {
+            text: 'View My Loans',
+            onPress: () => navigation.navigate('BorrowLoans')
+          }
+        ]
+      );
+      
+    } catch (error) {
+      console.error('Loan creation failed:', error);
+      Alert.alert(
+        'Loan Failed',
+        `Unable to process your loan: ${error.message}\n\nPlease try again or contact support.`,
+        [
+          { text: 'Try Again', style: 'default' },
+          { text: 'Contact Support', onPress: handleContactSupport }
+        ]
+      );
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const handleDecline = () => {
@@ -211,8 +298,19 @@ export default function ValuationResultScreen({ navigation, route }) {
               </View>
 
               {/* Action Buttons */}
-              <TouchableOpacity style={styles.proceedButton} onPress={handleProceedWithLoan}>
-                <Text style={styles.proceedButtonText}>Proceed with Loan</Text>
+              <TouchableOpacity 
+                style={[styles.proceedButton, processing && styles.disabledButton]} 
+                onPress={handleProceedWithLoan}
+                disabled={processing}
+              >
+                {processing ? (
+                  <View style={styles.processingContainer}>
+                    <ActivityIndicator size="small" color="white" style={styles.processingSpinner} />
+                    <Text style={styles.proceedButtonText}>Processing Loan...</Text>
+                  </View>
+                ) : (
+                  <Text style={styles.proceedButtonText}>Proceed with Loan</Text>
+                )}
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.declineButton} onPress={handleDecline}>
@@ -443,6 +541,18 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  disabledButton: {
+    backgroundColor: '#ccc',
+    opacity: 0.7,
+  },
+  processingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  processingSpinner: {
+    marginRight: 8,
   },
   declineButton: {
     backgroundColor: '#f44336',

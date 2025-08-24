@@ -1,14 +1,25 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
 import BorrowStack from './src/navigation/BorrowStack';
 import InvestScreen from './src/screens/InvestScreen';
+import AnimatedSplashScreen from './src/components/AnimatedSplashScreen';
 
 const Tab = createBottomTabNavigator();
 
 export default function App() {
+  const [showSplash, setShowSplash] = useState(true);
+
+  const handleSplashComplete = () => {
+    setShowSplash(false);
+  };
+
+  if (showSplash) {
+    return <AnimatedSplashScreen onAnimationComplete={handleSplashComplete} />;
+  }
+
   return (
     <NavigationContainer>
       <Tab.Navigator

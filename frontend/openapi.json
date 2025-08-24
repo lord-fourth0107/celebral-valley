@@ -1,0 +1,4564 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Celebral Valley API",
+        "description": "A DeFi lending and borrowing platform API",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/users/": {
+            "post": {
+                "tags": [
+                    "users"
+                ],
+                "summary": "Create User",
+                "description": "Create a new user",
+                "operationId": "create_user_users__post",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UserCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "users"
+                ],
+                "summary": "List Users",
+                "description": "Get all users with filtering and pagination",
+                "operationId": "list_users_users__get",
+                "parameters": [
+                    {
+                        "name": "email",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Filter by email (partial match)",
+                            "title": "Email"
+                        },
+                        "description": "Filter by email (partial match)"
+                    },
+                    {
+                        "name": "username",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Filter by username (partial match)",
+                            "title": "Username"
+                        },
+                        "description": "Filter by username (partial match)"
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "$ref": "#/components/schemas/UserStatus"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Filter by status",
+                            "title": "Status"
+                        },
+                        "description": "Filter by status"
+                    },
+                    {
+                        "name": "kyc_verified",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "boolean"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Filter by KYC verification status",
+                            "title": "Kyc Verified"
+                        },
+                        "description": "Filter by KYC verification status"
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "description": "Page number",
+                            "default": 1,
+                            "title": "Page"
+                        },
+                        "description": "Page number"
+                    },
+                    {
+                        "name": "page_size",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "description": "Number of users per page",
+                            "default": 20,
+                            "title": "Page Size"
+                        },
+                        "description": "Number of users per page"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserListResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}": {
+            "get": {
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get User",
+                "description": "Get a specific user by ID",
+                "operationId": "get_user_users__user_id__get",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "User Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "users"
+                ],
+                "summary": "Update User",
+                "description": "Update a user",
+                "operationId": "update_user_users__user_id__put",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "User Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UserUpdate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "users"
+                ],
+                "summary": "Delete User",
+                "description": "Delete a user",
+                "operationId": "delete_user_users__user_id__delete",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "User Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/users/email/{email}": {
+            "get": {
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get User By Email",
+                "description": "Get a user by email",
+                "operationId": "get_user_by_email_users_email__email__get",
+                "parameters": [
+                    {
+                        "name": "email",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Email"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/users/username/{username}": {
+            "get": {
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get User By Username",
+                "description": "Get a user by username",
+                "operationId": "get_user_by_username_users_username__username__get",
+                "parameters": [
+                    {
+                        "name": "username",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Username"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/status": {
+            "patch": {
+                "tags": [
+                    "users"
+                ],
+                "summary": "Update User Status",
+                "description": "Update user status",
+                "operationId": "update_user_status_users__user_id__status_patch",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "User Id"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/components/schemas/UserStatus"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/kyc": {
+            "patch": {
+                "tags": [
+                    "users"
+                ],
+                "summary": "Update Kyc Status",
+                "description": "Update user KYC verification status",
+                "operationId": "update_kyc_status_users__user_id__kyc_patch",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "User Id"
+                        }
+                    },
+                    {
+                        "name": "kyc_verified",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "boolean",
+                            "title": "Kyc Verified"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{user_id}/exists": {
+            "get": {
+                "tags": [
+                    "users"
+                ],
+                "summary": "Check User Exists",
+                "description": "Check if a user exists",
+                "operationId": "check_user_exists_users__user_id__exists_get",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "User Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/accounts/": {
+            "post": {
+                "tags": [
+                    "accounts"
+                ],
+                "summary": "Create Account",
+                "description": "Create a new account (one per user) - account number is auto-generated",
+                "operationId": "create_account_accounts__post",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AccountCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AccountResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "accounts"
+                ],
+                "summary": "List Accounts",
+                "description": "Get all accounts with filtering and pagination",
+                "operationId": "list_accounts_accounts__get",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Filter by user ID",
+                            "title": "User Id"
+                        },
+                        "description": "Filter by user ID"
+                    },
+                    {
+                        "name": "account_number",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Filter by account number (partial match)",
+                            "title": "Account Number"
+                        },
+                        "description": "Filter by account number (partial match)"
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "$ref": "#/components/schemas/AccountStatus"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Filter by status",
+                            "title": "Status"
+                        },
+                        "description": "Filter by status"
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "description": "Page number",
+                            "default": 1,
+                            "title": "Page"
+                        },
+                        "description": "Page number"
+                    },
+                    {
+                        "name": "page_size",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "description": "Number of accounts per page",
+                            "default": 20,
+                            "title": "Page Size"
+                        },
+                        "description": "Number of accounts per page"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AccountListResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/accounts/{account_id}": {
+            "get": {
+                "tags": [
+                    "accounts"
+                ],
+                "summary": "Get Account",
+                "description": "Get a specific account by ID",
+                "operationId": "get_account_accounts__account_id__get",
+                "parameters": [
+                    {
+                        "name": "account_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Account Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AccountResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "accounts"
+                ],
+                "summary": "Update Account",
+                "description": "Update an account",
+                "operationId": "update_account_accounts__account_id__put",
+                "parameters": [
+                    {
+                        "name": "account_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Account Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AccountUpdate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AccountResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "accounts"
+                ],
+                "summary": "Delete Account",
+                "description": "Delete an account",
+                "operationId": "delete_account_accounts__account_id__delete",
+                "parameters": [
+                    {
+                        "name": "account_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Account Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/accounts/user/{user_id}": {
+            "get": {
+                "tags": [
+                    "accounts"
+                ],
+                "summary": "Get Account By User Id",
+                "description": "Get account by user ID (one account per user)",
+                "operationId": "get_account_by_user_id_accounts_user__user_id__get",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "User Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AccountResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/accounts/number/{account_number}": {
+            "get": {
+                "tags": [
+                    "accounts"
+                ],
+                "summary": "Get Account By Number",
+                "description": "Get account by account number",
+                "operationId": "get_account_by_number_accounts_number__account_number__get",
+                "parameters": [
+                    {
+                        "name": "account_number",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Account Number"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AccountResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/accounts/{account_id}/status": {
+            "patch": {
+                "tags": [
+                    "accounts"
+                ],
+                "summary": "Update Account Status",
+                "description": "Update account status",
+                "operationId": "update_account_status_accounts__account_id__status_patch",
+                "parameters": [
+                    {
+                        "name": "account_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Account Id"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/components/schemas/AccountStatus"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AccountResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/accounts/{account_id}/close": {
+            "patch": {
+                "tags": [
+                    "accounts"
+                ],
+                "summary": "Close Account",
+                "description": "Close an account",
+                "operationId": "close_account_accounts__account_id__close_patch",
+                "parameters": [
+                    {
+                        "name": "account_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Account Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AccountResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/accounts/{account_id}/exists": {
+            "get": {
+                "tags": [
+                    "accounts"
+                ],
+                "summary": "Check Account Exists",
+                "description": "Check if an account exists",
+                "operationId": "check_account_exists_accounts__account_id__exists_get",
+                "parameters": [
+                    {
+                        "name": "account_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Account Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/transactions/deposit": {
+            "post": {
+                "tags": [
+                    "transactions"
+                ],
+                "summary": "Deposit Money",
+                "description": "Deposit money in the platform",
+                "operationId": "deposit_money_transactions_deposit_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DepositRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TransactionResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/transactions/withdrawal": {
+            "post": {
+                "tags": [
+                    "transactions"
+                ],
+                "summary": "Withdraw Money",
+                "description": "Withdraw money from the platform",
+                "operationId": "withdraw_money_transactions_withdrawal_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/WithdrawalRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TransactionResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/transactions/payment": {
+            "post": {
+                "tags": [
+                    "transactions"
+                ],
+                "summary": "Pay Loan",
+                "description": "Pay back a loan",
+                "operationId": "pay_loan_transactions_payment_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PaymentRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TransactionResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/transactions/create-loan": {
+            "post": {
+                "tags": [
+                    "transactions"
+                ],
+                "summary": "Create Loan",
+                "description": "Create a loan against a collateral",
+                "operationId": "create_loan_transactions_create_loan_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateLoanRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TransactionResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/transactions/": {
+            "get": {
+                "tags": [
+                    "transactions"
+                ],
+                "summary": "List Transactions",
+                "description": "Get all transactions with filtering and pagination",
+                "operationId": "list_transactions_transactions__get",
+                "parameters": [
+                    {
+                        "name": "account_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Filter by account ID",
+                            "title": "Account Id"
+                        },
+                        "description": "Filter by account ID"
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Filter by user ID",
+                            "title": "User Id"
+                        },
+                        "description": "Filter by user ID"
+                    },
+                    {
+                        "name": "transaction_type",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "$ref": "#/components/schemas/TransactionType"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Filter by transaction type",
+                            "title": "Transaction Type"
+                        },
+                        "description": "Filter by transaction type"
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "$ref": "#/components/schemas/TransactionStatus"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Filter by status",
+                            "title": "Status"
+                        },
+                        "description": "Filter by status"
+                    },
+                    {
+                        "name": "reference_number",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Filter by reference number",
+                            "title": "Reference Number"
+                        },
+                        "description": "Filter by reference number"
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "description": "Page number",
+                            "default": 1,
+                            "title": "Page"
+                        },
+                        "description": "Page number"
+                    },
+                    {
+                        "name": "page_size",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "description": "Number of transactions per page",
+                            "default": 20,
+                            "title": "Page Size"
+                        },
+                        "description": "Number of transactions per page"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TransactionListResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/transactions/{transaction_id}": {
+            "get": {
+                "tags": [
+                    "transactions"
+                ],
+                "summary": "Get Transaction",
+                "description": "Get a specific transaction by ID",
+                "operationId": "get_transaction_transactions__transaction_id__get",
+                "parameters": [
+                    {
+                        "name": "transaction_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Transaction Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TransactionResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/transactions/account/{account_id}": {
+            "get": {
+                "tags": [
+                    "transactions"
+                ],
+                "summary": "Get Transactions By Account",
+                "description": "Get all transactions for an account",
+                "operationId": "get_transactions_by_account_transactions_account__account_id__get",
+                "parameters": [
+                    {
+                        "name": "account_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Account Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/TransactionResponse"
+                                    },
+                                    "title": "Response Get Transactions By Account Transactions Account  Account Id  Get"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/transactions/user/{user_id}": {
+            "get": {
+                "tags": [
+                    "transactions"
+                ],
+                "summary": "Get Transactions By User",
+                "description": "Get all transactions for a user",
+                "operationId": "get_transactions_by_user_transactions_user__user_id__get",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "User Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/TransactionResponse"
+                                    },
+                                    "title": "Response Get Transactions By User Transactions User  User Id  Get"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/transactions/type/{transaction_type}": {
+            "get": {
+                "tags": [
+                    "transactions"
+                ],
+                "summary": "Get Transactions By Type",
+                "description": "Get all transactions by type",
+                "operationId": "get_transactions_by_type_transactions_type__transaction_type__get",
+                "parameters": [
+                    {
+                        "name": "transaction_type",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/components/schemas/TransactionType"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/TransactionResponse"
+                                    },
+                                    "title": "Response Get Transactions By Type Transactions Type  Transaction Type  Get"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/transactions/user/{user_id}/summary": {
+            "get": {
+                "tags": [
+                    "transactions"
+                ],
+                "summary": "Get User Transaction Summary",
+                "description": "Get transaction summary for a user",
+                "operationId": "get_user_transaction_summary_transactions_user__user_id__summary_get",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "User Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/collaterals/analyze-image": {
+            "post": {
+                "tags": [
+                    "collaterals"
+                ],
+                "summary": "Analyze Image For Collateral",
+                "description": "Analyze an image for collateral assessment using RAG3-LLAMPI integration",
+                "operationId": "analyze_image_for_collateral_collaterals_analyze_image_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ImageAnalysisRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ImageAnalysisResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/collaterals/": {
+            "post": {
+                "tags": [
+                    "collaterals"
+                ],
+                "summary": "Create Collateral",
+                "description": "Create a new collateral with RAG3 image analysis and LLM pricing",
+                "operationId": "create_collateral_collaterals__post",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CollateralCreateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CollateralResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "collaterals"
+                ],
+                "summary": "List Collaterals",
+                "description": "Get all collaterals with filtering and pagination",
+                "operationId": "list_collaterals_collaterals__get",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Filter by user ID",
+                            "title": "User Id"
+                        },
+                        "description": "Filter by user ID"
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "$ref": "#/components/schemas/CollateralStatus"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "description": "Filter by status",
+                            "title": "Status"
+                        },
+                        "description": "Filter by status"
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "description": "Page number",
+                            "default": 1,
+                            "title": "Page"
+                        },
+                        "description": "Page number"
+                    },
+                    {
+                        "name": "page_size",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 100,
+                            "minimum": 1,
+                            "description": "Number of collaterals per page",
+                            "default": 20,
+                            "title": "Page Size"
+                        },
+                        "description": "Number of collaterals per page"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CollateralListResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/collaterals/{collateral_id}/approve": {
+            "post": {
+                "tags": [
+                    "collaterals"
+                ],
+                "summary": "Approve Collateral",
+                "description": "Approve a collateral and create a loan transaction",
+                "operationId": "approve_collateral_collaterals__collateral_id__approve_post",
+                "parameters": [
+                    {
+                        "name": "collateral_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Collateral Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CollateralApproveRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CollateralResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/collaterals/{collateral_id}": {
+            "get": {
+                "tags": [
+                    "collaterals"
+                ],
+                "summary": "Get Collateral",
+                "description": "Get a specific collateral by ID",
+                "operationId": "get_collateral_collaterals__collateral_id__get",
+                "parameters": [
+                    {
+                        "name": "collateral_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Collateral Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CollateralResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "collaterals"
+                ],
+                "summary": "Update Collateral",
+                "description": "Update a collateral",
+                "operationId": "update_collateral_collaterals__collateral_id__put",
+                "parameters": [
+                    {
+                        "name": "collateral_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Collateral Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CollateralUpdate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CollateralResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/collaterals/{collateral_id}/extend-loan": {
+            "post": {
+                "tags": [
+                    "collaterals"
+                ],
+                "summary": "Extend Loan",
+                "description": "Extend a loan - creates a fee transaction and updates collateral loan amount",
+                "operationId": "extend_loan_collaterals__collateral_id__extend_loan_post",
+                "parameters": [
+                    {
+                        "name": "collateral_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Collateral Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ExtendLoanRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TransactionResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/": {
+            "get": {
+                "summary": "Root",
+                "description": "Root endpoint with API information",
+                "operationId": "root__get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "summary": "Health Check",
+                "description": "Health check endpoint",
+                "operationId": "health_check_health_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Account": {
+                "properties": {
+                    "user_id": {
+                        "type": "string",
+                        "title": "User ID",
+                        "description": "ID of the user who owns this account"
+                    },
+                    "wallet_id": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Wallet ID",
+                        "description": "Internal wallet ID for ledger management"
+                    },
+                    "id": {
+                        "type": "string",
+                        "title": "Account ID",
+                        "description": "Unique identifier for the account"
+                    },
+                    "account_number": {
+                        "type": "string",
+                        "maxLength": 50,
+                        "minLength": 1,
+                        "title": "Account Number",
+                        "description": "Unique account number"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/AccountStatus",
+                        "title": "Status",
+                        "description": "Account status",
+                        "default": "active"
+                    },
+                    "loan_balance": {
+                        "type": "number",
+                        "title": "Loan Balance",
+                        "description": "Current loan balance",
+                        "default": 0.0
+                    },
+                    "investment_balance": {
+                        "type": "number",
+                        "title": "Investment Balance",
+                        "description": "Current investment balance",
+                        "default": 0.0
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At",
+                        "description": "Account creation timestamp"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Updated At",
+                        "description": "Last update timestamp"
+                    },
+                    "closed_at": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Closed At",
+                        "description": "When the account was closed"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "user_id",
+                    "id",
+                    "account_number",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "Account",
+                "description": "Complete account model with all fields"
+            },
+            "AccountCreate": {
+                "properties": {
+                    "user_id": {
+                        "type": "string",
+                        "title": "User ID",
+                        "description": "ID of the user who owns this account"
+                    },
+                    "wallet_id": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Wallet ID",
+                        "description": "Internal wallet ID for ledger management"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "user_id"
+                ],
+                "title": "AccountCreate",
+                "description": "Model for creating a new account - account_number is auto-generated"
+            },
+            "AccountListResponse": {
+                "properties": {
+                    "accounts": {
+                        "items": {
+                            "$ref": "#/components/schemas/Account"
+                        },
+                        "type": "array",
+                        "title": "Accounts",
+                        "description": "List of accounts"
+                    },
+                    "total": {
+                        "type": "integer",
+                        "title": "Total",
+                        "description": "Total number of accounts"
+                    },
+                    "page": {
+                        "type": "integer",
+                        "title": "Page",
+                        "description": "Current page number"
+                    },
+                    "page_size": {
+                        "type": "integer",
+                        "title": "Page Size",
+                        "description": "Number of accounts per page"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "accounts",
+                    "total",
+                    "page",
+                    "page_size"
+                ],
+                "title": "AccountListResponse",
+                "description": "Response model for listing accounts"
+            },
+            "AccountResponse": {
+                "properties": {
+                    "user_id": {
+                        "type": "string",
+                        "title": "User ID",
+                        "description": "ID of the user who owns this account"
+                    },
+                    "wallet_id": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Wallet ID",
+                        "description": "Internal wallet ID for ledger management"
+                    },
+                    "id": {
+                        "type": "string",
+                        "title": "Account ID",
+                        "description": "Unique identifier for the account"
+                    },
+                    "account_number": {
+                        "type": "string",
+                        "maxLength": 50,
+                        "minLength": 1,
+                        "title": "Account Number",
+                        "description": "Unique account number"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/AccountStatus",
+                        "title": "Status",
+                        "description": "Account status",
+                        "default": "active"
+                    },
+                    "loan_balance": {
+                        "type": "number",
+                        "title": "Loan Balance",
+                        "description": "Current loan balance",
+                        "default": 0.0
+                    },
+                    "investment_balance": {
+                        "type": "number",
+                        "title": "Investment Balance",
+                        "description": "Current investment balance",
+                        "default": 0.0
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At",
+                        "description": "Account creation timestamp"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Updated At",
+                        "description": "Last update timestamp"
+                    },
+                    "closed_at": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Closed At",
+                        "description": "When the account was closed"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "user_id",
+                    "id",
+                    "account_number",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "AccountResponse",
+                "description": "Account response model - same as Account but for API responses"
+            },
+            "AccountStatus": {
+                "type": "string",
+                "enum": [
+                    "active",
+                    "inactive",
+                    "suspended",
+                    "closed"
+                ],
+                "title": "AccountStatus"
+            },
+            "AccountUpdate": {
+                "properties": {
+                    "account_number": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 50,
+                                "minLength": 1
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Account Number",
+                        "description": "Unique account number"
+                    },
+                    "status": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/AccountStatus"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Status",
+                        "description": "Account status"
+                    },
+                    "loan_balance": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Loan Balance",
+                        "description": "Current loan balance"
+                    },
+                    "investment_balance": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Investment Balance",
+                        "description": "Current investment balance"
+                    },
+                    "closed_at": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Closed At",
+                        "description": "When the account was closed"
+                    }
+                },
+                "type": "object",
+                "title": "AccountUpdate",
+                "description": "Model for updating an account - all fields optional"
+            },
+            "Collateral": {
+                "properties": {
+                    "user_id": {
+                        "type": "string",
+                        "title": "User ID",
+                        "description": "ID of the user who owns this collateral"
+                    },
+                    "loan_amount": {
+                        "type": "string",
+                        "title": "Loan Amount",
+                        "description": "Amount of loan against this collateral"
+                    },
+                    "loan_limit": {
+                        "type": "string",
+                        "title": "Loan Limit",
+                        "description": "Maximum loan amount allowed against this collateral"
+                    },
+                    "interest": {
+                        "type": "string",
+                        "title": "Interest",
+                        "description": "Interest rate for the loan against this collateral"
+                    },
+                    "due_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Due Date",
+                        "description": "Due date for the collateral loan"
+                    },
+                    "images": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Images",
+                        "description": "List of image URLs/paths for the collateral",
+                        "default": []
+                    },
+                    "metadata": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Metadata",
+                        "description": "Additional collateral metadata"
+                    },
+                    "id": {
+                        "type": "string",
+                        "title": "Collateral ID",
+                        "description": "Unique identifier for the collateral"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/CollateralStatus",
+                        "title": "Status",
+                        "description": "Collateral status",
+                        "default": "pending"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At",
+                        "description": "Collateral creation timestamp"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Last update timestamp",
+                        "description": "Last update timestamp"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "user_id",
+                    "loan_amount",
+                    "loan_limit",
+                    "interest",
+                    "due_date",
+                    "id",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "Collateral",
+                "description": "Complete collateral model with all fields"
+            },
+            "CollateralApproveRequest": {
+                "properties": {
+                    "loan_amount": {
+                        "anyOf": [
+                            {
+                                "type": "number",
+                                "exclusiveMinimum": 0.0
+                            },
+                            {
+                                "type": "string"
+                            }
+                        ],
+                        "title": "Loan Amount",
+                        "description": "Amount to loan against this collateral"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "loan_amount"
+                ],
+                "title": "CollateralApproveRequest",
+                "description": "Request model for approving a collateral and creating a loan"
+            },
+            "CollateralCreateRequest": {
+                "properties": {
+                    "user_id": {
+                        "type": "string",
+                        "title": "User ID",
+                        "description": "ID of the user who owns this collateral"
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 200,
+                        "minLength": 1,
+                        "title": "Name",
+                        "description": "Name of the collateral"
+                    },
+                    "description": {
+                        "type": "string",
+                        "maxLength": 1000,
+                        "minLength": 1,
+                        "title": "Description",
+                        "description": "Description of the collateral"
+                    },
+                    "images": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Images",
+                        "description": "List of image URLs/paths for the collateral",
+                        "default": []
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "user_id",
+                    "name",
+                    "description"
+                ],
+                "title": "CollateralCreateRequest",
+                "description": "Request model for creating a new collateral with basic info"
+            },
+            "CollateralListResponse": {
+                "properties": {
+                    "collaterals": {
+                        "items": {
+                            "$ref": "#/components/schemas/Collateral"
+                        },
+                        "type": "array",
+                        "title": "Collaterals",
+                        "description": "List of collaterals"
+                    },
+                    "total": {
+                        "type": "integer",
+                        "title": "Total",
+                        "description": "Total number of collaterals"
+                    },
+                    "page": {
+                        "type": "integer",
+                        "title": "Page",
+                        "description": "Current page number"
+                    },
+                    "page_size": {
+                        "type": "integer",
+                        "title": "Page Size",
+                        "description": "Number of collaterals per page"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "collaterals",
+                    "total",
+                    "page",
+                    "page_size"
+                ],
+                "title": "CollateralListResponse",
+                "description": "Response model for listing collaterals"
+            },
+            "CollateralResponse": {
+                "properties": {
+                    "user_id": {
+                        "type": "string",
+                        "title": "User ID",
+                        "description": "ID of the user who owns this collateral"
+                    },
+                    "loan_amount": {
+                        "type": "string",
+                        "title": "Loan Amount",
+                        "description": "Amount of loan against this collateral"
+                    },
+                    "loan_limit": {
+                        "type": "string",
+                        "title": "Loan Limit",
+                        "description": "Maximum loan amount allowed against this collateral"
+                    },
+                    "interest": {
+                        "type": "string",
+                        "title": "Interest",
+                        "description": "Interest rate for the loan against this collateral"
+                    },
+                    "due_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Due Date",
+                        "description": "Due date for the collateral loan"
+                    },
+                    "images": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Images",
+                        "description": "List of image URLs/paths for the collateral",
+                        "default": []
+                    },
+                    "metadata": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Metadata",
+                        "description": "Additional collateral metadata"
+                    },
+                    "id": {
+                        "type": "string",
+                        "title": "Collateral ID",
+                        "description": "Unique identifier for the collateral"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/CollateralStatus",
+                        "title": "Status",
+                        "description": "Collateral status",
+                        "default": "pending"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At",
+                        "description": "Collateral creation timestamp"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Last update timestamp",
+                        "description": "Last update timestamp"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "user_id",
+                    "loan_amount",
+                    "loan_limit",
+                    "interest",
+                    "due_date",
+                    "id",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "CollateralResponse",
+                "description": "Collateral response model - same as Collateral but for API responses"
+            },
+            "CollateralStatus": {
+                "type": "string",
+                "enum": [
+                    "pending",
+                    "approved",
+                    "rejected",
+                    "released",
+                    "defaulted"
+                ],
+                "title": "CollateralStatus"
+            },
+            "CollateralUpdate": {
+                "properties": {
+                    "loan_amount": {
+                        "anyOf": [
+                            {
+                                "type": "number",
+                                "exclusiveMinimum": 0.0
+                            },
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Loan Amount",
+                        "description": "Amount of loan against this collateral"
+                    },
+                    "loan_limit": {
+                        "anyOf": [
+                            {
+                                "type": "number",
+                                "exclusiveMinimum": 0.0
+                            },
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Loan Limit",
+                        "description": "Maximum loan amount allowed against this collateral"
+                    },
+                    "interest": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Interest",
+                        "description": "Interest rate for the loan against this collateral"
+                    },
+                    "due_date": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Due Date",
+                        "description": "Due date for the collateral loan"
+                    },
+                    "status": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/CollateralStatus"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Status",
+                        "description": "Collateral status"
+                    },
+                    "images": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Images",
+                        "description": "List of image URLs/paths for the collateral"
+                    },
+                    "metadata": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Metadata",
+                        "description": "Additional collateral metadata"
+                    }
+                },
+                "type": "object",
+                "title": "CollateralUpdate",
+                "description": "Model for updating a collateral - all fields optional"
+            },
+            "CreateLoanRequest": {
+                "properties": {
+                    "account_id": {
+                        "type": "string",
+                        "title": "Account ID",
+                        "description": "ID of the account receiving the loan"
+                    },
+                    "user_id": {
+                        "type": "string",
+                        "title": "User ID",
+                        "description": "ID of the user receiving the loan"
+                    },
+                    "collateral_id": {
+                        "type": "string",
+                        "title": "Collateral ID",
+                        "description": "ID of the collateral to loan against"
+                    },
+                    "loan_amount": {
+                        "type": "number",
+                        "exclusiveMinimum": 0.0,
+                        "title": "Loan Amount",
+                        "description": "Amount to loan against the collateral"
+                    },
+                    "description": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Description",
+                        "description": "Loan description"
+                    },
+                    "reference_number": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Reference Number",
+                        "description": "External reference number"
+                    },
+                    "metadata": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Metadata",
+                        "description": "Additional loan metadata"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "account_id",
+                    "user_id",
+                    "collateral_id",
+                    "loan_amount"
+                ],
+                "title": "CreateLoanRequest",
+                "description": "Request model for creating a loan against a collateral"
+            },
+            "DepositRequest": {
+                "properties": {
+                    "account_id": {
+                        "type": "string",
+                        "title": "Account ID",
+                        "description": "ID of the account to deposit to"
+                    },
+                    "user_id": {
+                        "type": "string",
+                        "title": "User ID",
+                        "description": "ID of the user making the deposit"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "exclusiveMinimum": 0.0,
+                        "title": "Amount",
+                        "description": "Amount to deposit"
+                    },
+                    "description": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Description",
+                        "description": "Deposit description"
+                    },
+                    "reference_number": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Reference Number",
+                        "description": "External reference number"
+                    },
+                    "metadata": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Metadata",
+                        "description": "Additional deposit metadata"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "account_id",
+                    "user_id",
+                    "amount"
+                ],
+                "title": "DepositRequest",
+                "description": "Request model for deposit transaction"
+            },
+            "ExtendLoanRequest": {
+                "properties": {
+                    "account_id": {
+                        "type": "string",
+                        "title": "Account ID",
+                        "description": "ID of the account extending the loan"
+                    },
+                    "user_id": {
+                        "type": "string",
+                        "title": "User ID",
+                        "description": "ID of the user extending the loan"
+                    },
+                    "collateral_id": {
+                        "type": "string",
+                        "title": "Collateral ID",
+                        "description": "ID of the collateral to extend"
+                    },
+                    "extension_days": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0.0,
+                        "title": "Extension Days",
+                        "description": "Number of days to extend the loan"
+                    },
+                    "fee": {
+                        "type": "number",
+                        "exclusiveMinimum": 0.0,
+                        "title": "Extension Fee",
+                        "description": "Fee for extending the loan"
+                    },
+                    "description": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Description",
+                        "description": "Extension description"
+                    },
+                    "reference_number": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Reference Number",
+                        "description": "External reference number"
+                    },
+                    "metadata": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Metadata",
+                        "description": "Additional extension metadata"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "account_id",
+                    "user_id",
+                    "collateral_id",
+                    "extension_days",
+                    "fee"
+                ],
+                "title": "ExtendLoanRequest",
+                "description": "Request model for loan extension transaction - creates a fee transaction"
+            },
+            "HTTPValidationError": {
+                "properties": {
+                    "detail": {
+                        "items": {
+                            "$ref": "#/components/schemas/ValidationError"
+                        },
+                        "type": "array",
+                        "title": "Detail"
+                    }
+                },
+                "type": "object",
+                "title": "HTTPValidationError"
+            },
+            "ImageAnalysisRequest": {
+                "properties": {
+                    "user_id": {
+                        "type": "string",
+                        "title": "User ID",
+                        "description": "ID of the user requesting the analysis"
+                    },
+                    "image_path": {
+                        "type": "string",
+                        "title": "Image Path",
+                        "description": "Path to the image file to analyze"
+                    },
+                    "user_description": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "User Description",
+                        "description": "User's description of the item",
+                        "default": ""
+                    },
+                    "top_k": {
+                        "anyOf": [
+                            {
+                                "type": "integer",
+                                "maximum": 10.0,
+                                "minimum": 1.0
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Top K",
+                        "description": "Number of similar images to find",
+                        "default": 3
+                    },
+                    "score_threshold": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Score Threshold",
+                        "description": "Minimum similarity score threshold",
+                        "default": 0.0
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "user_id",
+                    "image_path"
+                ],
+                "title": "ImageAnalysisRequest",
+                "description": "Request model for analyzing an image for collateral assessment"
+            },
+            "ImageAnalysisResponse": {
+                "properties": {
+                    "input_image_analysis": {
+                        "$ref": "#/components/schemas/InputImageAnalysis",
+                        "title": "Input Image Analysis",
+                        "description": "Analysis results for the input image"
+                    },
+                    "similar_images_analysis": {
+                        "items": {
+                            "$ref": "#/components/schemas/SimilarImageAnalysis"
+                        },
+                        "type": "array",
+                        "title": "Similar Images Analysis",
+                        "description": "Analysis results for similar images"
+                    },
+                    "summary": {
+                        "$ref": "#/components/schemas/ImageAnalysisSummary",
+                        "title": "Summary",
+                        "description": "Summary statistics of the analysis"
+                    },
+                    "metadata": {
+                        "additionalProperties": true,
+                        "type": "object",
+                        "title": "Metadata",
+                        "description": "Additional metadata about the analysis"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "input_image_analysis",
+                    "similar_images_analysis",
+                    "summary",
+                    "metadata"
+                ],
+                "title": "ImageAnalysisResponse",
+                "description": "Response model for image analysis results"
+            },
+            "ImageAnalysisSummary": {
+                "properties": {
+                    "total_images_processed": {
+                        "type": "integer",
+                        "title": "Total Images Processed",
+                        "description": "Total number of images analyzed"
+                    },
+                    "successful_price_calculations": {
+                        "type": "integer",
+                        "title": "Successful Price Calculations",
+                        "description": "Number of successful price calculations"
+                    },
+                    "failed_price_calculations": {
+                        "type": "integer",
+                        "title": "Failed Price Calculations",
+                        "description": "Number of failed price calculations"
+                    },
+                    "success_rate": {
+                        "type": "string",
+                        "title": "Success Rate",
+                        "description": "Percentage of successful calculations"
+                    },
+                    "input_image_found": {
+                        "type": "boolean",
+                        "title": "Input Image Found",
+                        "description": "Whether input image analysis was successful"
+                    },
+                    "similar_images_found": {
+                        "type": "integer",
+                        "title": "Similar Images Found",
+                        "description": "Number of similar images found"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "total_images_processed",
+                    "successful_price_calculations",
+                    "failed_price_calculations",
+                    "success_rate",
+                    "input_image_found",
+                    "similar_images_found"
+                ],
+                "title": "ImageAnalysisSummary",
+                "description": "Model for analysis summary statistics"
+            },
+            "InputImageAnalysis": {
+                "properties": {
+                    "image_path": {
+                        "type": "string",
+                        "title": "Image Path",
+                        "description": "Path to the analyzed image"
+                    },
+                    "user_description": {
+                        "type": "string",
+                        "title": "User Description",
+                        "description": "User's description of the item"
+                    },
+                    "product_name": {
+                        "type": "string",
+                        "title": "Product Name",
+                        "description": "Identified product name"
+                    },
+                    "initial_price": {
+                        "type": "string",
+                        "title": "Initial Price",
+                        "description": "Market price of the item"
+                    },
+                    "collateral_price": {
+                        "type": "string",
+                        "title": "Collateral Price",
+                        "description": "Conservative collateral value"
+                    },
+                    "currency": {
+                        "type": "string",
+                        "title": "Currency",
+                        "description": "Currency of the price"
+                    },
+                    "marketplace": {
+                        "type": "string",
+                        "title": "Marketplace",
+                        "description": "Marketplace where price was found"
+                    },
+                    "confidence": {
+                        "type": "string",
+                        "title": "Confidence",
+                        "description": "Confidence level of the analysis"
+                    },
+                    "collateral_explanation": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Collateral Explanation",
+                        "description": "Brief explanation of collateral value calculation"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "image_path",
+                    "user_description",
+                    "product_name",
+                    "initial_price",
+                    "collateral_price",
+                    "currency",
+                    "marketplace",
+                    "confidence"
+                ],
+                "title": "InputImageAnalysis",
+                "description": "Model for input image analysis results"
+            },
+            "PaymentRequest": {
+                "properties": {
+                    "account_id": {
+                        "type": "string",
+                        "title": "Account ID",
+                        "description": "ID of the account making the payment"
+                    },
+                    "user_id": {
+                        "type": "string",
+                        "title": "User ID",
+                        "description": "ID of the user making the payment"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "exclusiveMinimum": 0.0,
+                        "title": "Amount",
+                        "description": "Payment amount"
+                    },
+                    "collateral_id": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Collateral ID",
+                        "description": "ID of the collateral being paid for"
+                    },
+                    "description": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Description",
+                        "description": "Payment description"
+                    },
+                    "reference_number": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Reference Number",
+                        "description": "External reference number"
+                    },
+                    "metadata": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Metadata",
+                        "description": "Additional payment metadata"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "account_id",
+                    "user_id",
+                    "amount"
+                ],
+                "title": "PaymentRequest",
+                "description": "Request model for payment transaction"
+            },
+            "SimilarImageAnalysis": {
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "title": "Name",
+                        "description": "Name of the similar image"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Type",
+                        "description": "Type/category of the item"
+                    },
+                    "user_description": {
+                        "type": "string",
+                        "title": "User Description",
+                        "description": "User description of the item"
+                    },
+                    "similarity_score": {
+                        "type": "number",
+                        "title": "Similarity Score",
+                        "description": "Similarity score with input image"
+                    },
+                    "initial_price": {
+                        "type": "string",
+                        "title": "Initial Price",
+                        "description": "Market price of the item"
+                    },
+                    "collateral_price": {
+                        "type": "string",
+                        "title": "Collateral Price",
+                        "description": "Conservative collateral value"
+                    },
+                    "currency": {
+                        "type": "string",
+                        "title": "Currency",
+                        "description": "Currency of the price"
+                    },
+                    "marketplace": {
+                        "type": "string",
+                        "title": "Marketplace",
+                        "description": "Marketplace where price was found"
+                    },
+                    "confidence": {
+                        "type": "string",
+                        "title": "Confidence",
+                        "description": "Confidence level of the analysis"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "name",
+                    "type",
+                    "user_description",
+                    "similarity_score",
+                    "initial_price",
+                    "collateral_price",
+                    "currency",
+                    "marketplace",
+                    "confidence"
+                ],
+                "title": "SimilarImageAnalysis",
+                "description": "Model for similar image analysis results"
+            },
+            "Transaction": {
+                "properties": {
+                    "account_id": {
+                        "type": "string",
+                        "title": "Account ID",
+                        "description": "ID of the account involved"
+                    },
+                    "user_id": {
+                        "type": "string",
+                        "title": "User ID",
+                        "description": "ID of the user making the transaction"
+                    },
+                    "transaction_type": {
+                        "$ref": "#/components/schemas/TransactionType",
+                        "title": "Transaction Type",
+                        "description": "Type of transaction"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "title": "Amount",
+                        "description": "Transaction amount"
+                    },
+                    "description": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Description",
+                        "description": "Transaction description"
+                    },
+                    "reference_number": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Reference Number",
+                        "description": "External reference number"
+                    },
+                    "collateral_id": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Collateral ID",
+                        "description": "ID of collateral for loan-related transactions"
+                    },
+                    "metadata": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Metadata",
+                        "description": "Additional transaction metadata"
+                    },
+                    "id": {
+                        "type": "string",
+                        "title": "Transaction ID",
+                        "description": "Unique identifier for the transaction"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/TransactionStatus",
+                        "title": "Status",
+                        "description": "Transaction status",
+                        "default": "pending"
+                    },
+                    "loan_balance_before": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Loan Balance Before",
+                        "description": "Loan balance before transaction"
+                    },
+                    "loan_balance_after": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Loan Balance After",
+                        "description": "Loan balance after transaction"
+                    },
+                    "invested_balance_before": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Invested Balance Before",
+                        "description": "Invested balance before transaction"
+                    },
+                    "invested_balance_after": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Invested Balance After",
+                        "description": "Invested balance after transaction"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At",
+                        "description": "Transaction creation timestamp"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Updated At",
+                        "description": "Last update timestamp"
+                    },
+                    "processed_at": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Processed At",
+                        "description": "Transaction processing timestamp"
+                    },
+                    "failed_at": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Failed At",
+                        "description": "Transaction failure timestamp"
+                    },
+                    "failure_reason": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Failure Reason",
+                        "description": "Reason for transaction failure"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "account_id",
+                    "user_id",
+                    "transaction_type",
+                    "amount",
+                    "id",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "Transaction",
+                "description": "Complete transaction model with all fields"
+            },
+            "TransactionListResponse": {
+                "properties": {
+                    "transactions": {
+                        "items": {
+                            "$ref": "#/components/schemas/Transaction"
+                        },
+                        "type": "array",
+                        "title": "Transactions",
+                        "description": "List of transactions"
+                    },
+                    "total": {
+                        "type": "integer",
+                        "title": "Total",
+                        "description": "Total number of transactions"
+                    },
+                    "page": {
+                        "type": "integer",
+                        "title": "Page",
+                        "description": "Current page number"
+                    },
+                    "page_size": {
+                        "type": "integer",
+                        "title": "Page Size",
+                        "description": "Number of transactions per page"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "transactions",
+                    "total",
+                    "page",
+                    "page_size"
+                ],
+                "title": "TransactionListResponse",
+                "description": "Response model for listing transactions"
+            },
+            "TransactionResponse": {
+                "properties": {
+                    "account_id": {
+                        "type": "string",
+                        "title": "Account ID",
+                        "description": "ID of the account involved"
+                    },
+                    "user_id": {
+                        "type": "string",
+                        "title": "User ID",
+                        "description": "ID of the user making the transaction"
+                    },
+                    "transaction_type": {
+                        "$ref": "#/components/schemas/TransactionType",
+                        "title": "Transaction Type",
+                        "description": "Type of transaction"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "title": "Amount",
+                        "description": "Transaction amount"
+                    },
+                    "description": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Description",
+                        "description": "Transaction description"
+                    },
+                    "reference_number": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Reference Number",
+                        "description": "External reference number"
+                    },
+                    "collateral_id": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Collateral ID",
+                        "description": "ID of collateral for loan-related transactions"
+                    },
+                    "metadata": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Metadata",
+                        "description": "Additional transaction metadata"
+                    },
+                    "id": {
+                        "type": "string",
+                        "title": "Transaction ID",
+                        "description": "Unique identifier for the transaction"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/TransactionStatus",
+                        "title": "Status",
+                        "description": "Transaction status",
+                        "default": "pending"
+                    },
+                    "loan_balance_before": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Loan Balance Before",
+                        "description": "Loan balance before transaction"
+                    },
+                    "loan_balance_after": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Loan Balance After",
+                        "description": "Loan balance after transaction"
+                    },
+                    "invested_balance_before": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Invested Balance Before",
+                        "description": "Invested balance before transaction"
+                    },
+                    "invested_balance_after": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Invested Balance After",
+                        "description": "Invested balance after transaction"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At",
+                        "description": "Transaction creation timestamp"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Updated At",
+                        "description": "Last update timestamp"
+                    },
+                    "processed_at": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Processed At",
+                        "description": "Transaction processing timestamp"
+                    },
+                    "failed_at": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Failed At",
+                        "description": "Transaction failure timestamp"
+                    },
+                    "failure_reason": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Failure Reason",
+                        "description": "Reason for transaction failure"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "account_id",
+                    "user_id",
+                    "transaction_type",
+                    "amount",
+                    "id",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "TransactionResponse",
+                "description": "Transaction response model - same as Transaction but for API responses"
+            },
+            "TransactionStatus": {
+                "type": "string",
+                "enum": [
+                    "pending",
+                    "completed",
+                    "failed",
+                    "cancelled",
+                    "reversed"
+                ],
+                "title": "TransactionStatus"
+            },
+            "TransactionType": {
+                "type": "string",
+                "enum": [
+                    "deposit",
+                    "withdrawal",
+                    "interest",
+                    "loan_disbursement",
+                    "payment",
+                    "fee"
+                ],
+                "title": "TransactionType"
+            },
+            "User": {
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "title": "Email",
+                        "description": "User's email address"
+                    },
+                    "username": {
+                        "type": "string",
+                        "maxLength": 50,
+                        "minLength": 3,
+                        "title": "Username",
+                        "description": "Unique username for the user"
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "minLength": 1,
+                        "title": "First Name",
+                        "description": "User's first name"
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "minLength": 1,
+                        "title": "Last Name",
+                        "description": "User's last name"
+                    },
+                    "phone": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Phone",
+                        "description": "User's phone number"
+                    },
+                    "date_of_birth": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Date of Birth",
+                        "description": "User's date of birth"
+                    },
+                    "address": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Address",
+                        "description": "User's residential address"
+                    },
+                    "city": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "City",
+                        "description": "User's city"
+                    },
+                    "state": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "State",
+                        "description": "User's state/province"
+                    },
+                    "country": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Country",
+                        "description": "User's country"
+                    },
+                    "postal_code": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Postal Code",
+                        "description": "User's postal code"
+                    },
+                    "role": {
+                        "$ref": "#/components/schemas/UserRole",
+                        "title": "Role",
+                        "description": "User's role in the system",
+                        "default": "user"
+                    },
+                    "id": {
+                        "type": "string",
+                        "title": "User ID",
+                        "description": "Unique identifier for the user"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/UserStatus",
+                        "title": "Status",
+                        "description": "User's account status",
+                        "default": "pending_verification"
+                    },
+                    "kyc_verified": {
+                        "type": "boolean",
+                        "title": "KYC Verified",
+                        "description": "Whether user's KYC is verified",
+                        "default": false
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At",
+                        "description": "Account creation timestamp"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Updated At",
+                        "description": "Last update timestamp"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "email",
+                    "username",
+                    "first_name",
+                    "last_name",
+                    "id",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "User",
+                "description": "Complete user model with all fields"
+            },
+            "UserCreate": {
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "title": "Email",
+                        "description": "User's email address"
+                    },
+                    "username": {
+                        "type": "string",
+                        "maxLength": 50,
+                        "minLength": 3,
+                        "title": "Username",
+                        "description": "Unique username for the user"
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "minLength": 1,
+                        "title": "First Name",
+                        "description": "User's first name"
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "minLength": 1,
+                        "title": "Last Name",
+                        "description": "User's last name"
+                    },
+                    "phone": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Phone",
+                        "description": "User's phone number"
+                    },
+                    "date_of_birth": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Date of Birth",
+                        "description": "User's date of birth"
+                    },
+                    "address": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Address",
+                        "description": "User's residential address"
+                    },
+                    "city": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "City",
+                        "description": "User's city"
+                    },
+                    "state": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "State",
+                        "description": "User's state/province"
+                    },
+                    "country": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Country",
+                        "description": "User's country"
+                    },
+                    "postal_code": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Postal Code",
+                        "description": "User's postal code"
+                    },
+                    "role": {
+                        "$ref": "#/components/schemas/UserRole",
+                        "title": "Role",
+                        "description": "User's role in the system",
+                        "default": "user"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "email",
+                    "username",
+                    "first_name",
+                    "last_name"
+                ],
+                "title": "UserCreate",
+                "description": "Model for creating a new user"
+            },
+            "UserListResponse": {
+                "properties": {
+                    "users": {
+                        "items": {
+                            "$ref": "#/components/schemas/User"
+                        },
+                        "type": "array",
+                        "title": "Users",
+                        "description": "List of users"
+                    },
+                    "total": {
+                        "type": "integer",
+                        "title": "Total",
+                        "description": "Total number of users"
+                    },
+                    "page": {
+                        "type": "integer",
+                        "title": "Page",
+                        "description": "Current page number"
+                    },
+                    "page_size": {
+                        "type": "integer",
+                        "title": "Page Size",
+                        "description": "Number of users per page"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "users",
+                    "total",
+                    "page",
+                    "page_size"
+                ],
+                "title": "UserListResponse",
+                "description": "Response model for listing users"
+            },
+            "UserResponse": {
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "title": "Email",
+                        "description": "User's email address"
+                    },
+                    "username": {
+                        "type": "string",
+                        "maxLength": 50,
+                        "minLength": 3,
+                        "title": "Username",
+                        "description": "Unique username for the user"
+                    },
+                    "first_name": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "minLength": 1,
+                        "title": "First Name",
+                        "description": "User's first name"
+                    },
+                    "last_name": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "minLength": 1,
+                        "title": "Last Name",
+                        "description": "User's last name"
+                    },
+                    "phone": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Phone",
+                        "description": "User's phone number"
+                    },
+                    "date_of_birth": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Date of Birth",
+                        "description": "User's date of birth"
+                    },
+                    "address": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Address",
+                        "description": "User's residential address"
+                    },
+                    "city": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "City",
+                        "description": "User's city"
+                    },
+                    "state": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "State",
+                        "description": "User's state/province"
+                    },
+                    "country": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Country",
+                        "description": "User's country"
+                    },
+                    "postal_code": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Postal Code",
+                        "description": "User's postal code"
+                    },
+                    "role": {
+                        "$ref": "#/components/schemas/UserRole",
+                        "title": "Role",
+                        "description": "User's role in the system",
+                        "default": "user"
+                    },
+                    "id": {
+                        "type": "string",
+                        "title": "User ID",
+                        "description": "Unique identifier for the user"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/UserStatus",
+                        "title": "Status",
+                        "description": "User's account status",
+                        "default": "pending_verification"
+                    },
+                    "kyc_verified": {
+                        "type": "boolean",
+                        "title": "KYC Verified",
+                        "description": "Whether user's KYC is verified",
+                        "default": false
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Created At",
+                        "description": "Account creation timestamp"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "title": "Updated At",
+                        "description": "Last update timestamp"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "email",
+                    "username",
+                    "first_name",
+                    "last_name",
+                    "id",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "UserResponse",
+                "description": "User response model - same as User but for API responses"
+            },
+            "UserRole": {
+                "type": "string",
+                "enum": [
+                    "user",
+                    "admin",
+                    "verifier",
+                    "organization"
+                ],
+                "title": "UserRole"
+            },
+            "UserStatus": {
+                "type": "string",
+                "enum": [
+                    "active",
+                    "inactive",
+                    "pending_verification"
+                ],
+                "title": "UserStatus"
+            },
+            "UserUpdate": {
+                "properties": {
+                    "email": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "email"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Email",
+                        "description": "User's email address"
+                    },
+                    "username": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 50,
+                                "minLength": 3
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Username",
+                        "description": "Unique username for the user"
+                    },
+                    "first_name": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 100,
+                                "minLength": 1
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "First Name",
+                        "description": "User's first name"
+                    },
+                    "last_name": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 100,
+                                "minLength": 1
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Last Name",
+                        "description": "User's last name"
+                    },
+                    "phone": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Phone",
+                        "description": "User's phone number"
+                    },
+                    "date_of_birth": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "date-time"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Date of Birth",
+                        "description": "User's date of birth"
+                    },
+                    "address": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Address",
+                        "description": "User's residential address"
+                    },
+                    "city": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "City",
+                        "description": "User's city"
+                    },
+                    "state": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "State",
+                        "description": "User's state/province"
+                    },
+                    "country": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Country",
+                        "description": "User's country"
+                    },
+                    "postal_code": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Postal Code",
+                        "description": "User's postal code"
+                    },
+                    "role": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/UserRole"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Role",
+                        "description": "User's role in the system"
+                    },
+                    "status": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/UserStatus"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Status",
+                        "description": "User's account status"
+                    },
+                    "kyc_verified": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "KYC Verified",
+                        "description": "Whether user's KYC is verified"
+                    }
+                },
+                "type": "object",
+                "title": "UserUpdate",
+                "description": "Model for updating a user - all fields optional"
+            },
+            "ValidationError": {
+                "properties": {
+                    "loc": {
+                        "items": {
+                            "anyOf": [
+                                {
+                                    "type": "string"
+                                },
+                                {
+                                    "type": "integer"
+                                }
+                            ]
+                        },
+                        "type": "array",
+                        "title": "Location"
+                    },
+                    "msg": {
+                        "type": "string",
+                        "title": "Message"
+                    },
+                    "type": {
+                        "type": "string",
+                        "title": "Error Type"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "loc",
+                    "msg",
+                    "type"
+                ],
+                "title": "ValidationError"
+            },
+            "WithdrawalRequest": {
+                "properties": {
+                    "account_id": {
+                        "type": "string",
+                        "title": "Account ID",
+                        "description": "ID of the account to withdraw from"
+                    },
+                    "user_id": {
+                        "type": "string",
+                        "title": "User ID",
+                        "description": "ID of the user making the withdrawal"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "exclusiveMinimum": 0.0,
+                        "title": "Amount",
+                        "description": "Amount to withdraw"
+                    },
+                    "description": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Description",
+                        "description": "Withdrawal description"
+                    },
+                    "reference_number": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Reference Number",
+                        "description": "External reference number"
+                    },
+                    "metadata": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Metadata",
+                        "description": "Additional withdrawal metadata"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "account_id",
+                    "user_id",
+                    "amount"
+                ],
+                "title": "WithdrawalRequest",
+                "description": "Request model for withdrawal transaction"
+            }
+        }
+    }
+}

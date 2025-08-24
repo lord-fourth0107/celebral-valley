@@ -33,6 +33,7 @@ Pillow = "^11.0.0"
 qdrant-client = "^1.7.0"
 numpy = "^2.0.0"
 openai-clip = "^1.0"
+setuptools = "^80.9.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.0.0"

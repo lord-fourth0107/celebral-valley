@@ -115,7 +115,8 @@ def integrate_rag3_with_llampi(input_image_path: str,
                 input_image_path, 
                 additional_context=user_description
             )
-            print(f"   ✅ Input image price calculated: {input_image_price.price_range}")
+            print(f"   ✅ Input image price calculated: {input_image_price.initial_price}")
+            print(f"   💰 Collateral value: {input_image_price.collateral_price}")
         except Exception as e:
             print(f"   ❌ Error calculating input image price: {e}")
             input_image_price = None
@@ -150,7 +151,9 @@ def integrate_rag3_with_llampi(input_image_path: str,
                         'user_description': similar_img['user_description'],
                         'detailed_description': similar_img['detailed_description'],
                         'similarity_score': similar_img['score'],
-                        'price_range': similar_img_price.price_range,
+                        'initial_price': similar_img_price.initial_price,
+                        'collateral_price': similar_img_price.collateral_price,
+                        'price_range': similar_img_price.price_range,  # For backward compatibility
                         'currency': similar_img_price.currency,
                         'marketplace': similar_img_price.marketplace,
                         'confidence': similar_img_price.confidence,
@@ -175,7 +178,9 @@ def integrate_rag3_with_llampi(input_image_path: str,
                         'user_description': similar_img['user_description'],
                         'detailed_description': similar_img['detailed_description'],
                         'similarity_score': similar_img['score'],
-                        'price_range': 'Price calculation failed',
+                        'initial_price': 'Price calculation failed',
+                        'collateral_price': 'Price calculation failed',
+                        'price_range': 'Price calculation failed',  # For backward compatibility
                         'currency': 'Unknown',
                         'marketplace': 'Unknown',
                         'confidence': 'low',
@@ -195,7 +200,9 @@ def integrate_rag3_with_llampi(input_image_path: str,
             'price_data': input_image_price,
             'analysis_summary': {
                 'name': input_image_price.product_name if input_image_price else 'Unknown',
-                'price_range': input_image_price.price_range if input_image_price else 'Price calculation failed',
+                'initial_price': input_image_price.initial_price if input_image_price else 'Price calculation failed',
+                'collateral_price': input_image_price.collateral_price if input_image_price else 'Price calculation failed',
+                'price_range': input_image_price.price_range if input_image_price else 'Price calculation failed',  # For backward compatibility
                 'currency': input_image_price.currency if input_image_price else 'Unknown',
                 'marketplace': input_image_price.marketplace if input_image_price else 'Unknown',
                 'confidence': input_image_price.confidence if input_image_price else 'low'
@@ -256,14 +263,15 @@ def _print_comprehensive_results(results: Dict, input_image_path: str, user_desc
     price_data = input_analysis['price_data']
     if price_data:
         print(f"   Product Name: {price_data.product_name}")
-        print(f"   Price Range: {price_data.price_range}")
+        print(f"   Initial Price: {price_data.initial_price}")
+        print(f"   Collateral Price: {price_data.collateral_price}")
         print(f"   Currency: {price_data.currency}")
         print(f"   Marketplace: {price_data.marketplace}")
         print(f"   Confidence: {price_data.confidence}")
         
-        # Display detailed analysis for input image
+        # Display brief collateral value explanation
         if hasattr(price_data, 'additional_info') and price_data.additional_info:
-            print(f"\n   📋 DETAILED ANALYSIS:")
+            print(f"\n   💰 COLLATERAL VALUE EXPLANATION:")
             print(f"   {price_data.additional_info}")
     else:
         print(f"   ❌ Price calculation failed")
@@ -278,7 +286,8 @@ def _print_comprehensive_results(results: Dict, input_image_path: str, user_desc
         print(f"   Type: {combined_info['type']}")
         print(f"   User Description: {combined_info['user_description']}")
         print(f"   Similarity Score: {combined_info['similarity_score']:.3f}")
-        print(f"   Price Range: {combined_info['price_range']}")
+        print(f"   Initial Price: {combined_info['initial_price']}")
+        print(f"   Collateral Price: {combined_info['collateral_price']}")
         print(f"   Currency: {combined_info['currency']}")
         print(f"   Marketplace: {combined_info['marketplace']}")
         print(f"   Confidence: {combined_info['confidence']}")
@@ -460,14 +469,15 @@ def _save_results_to_file(results: Dict, image_path: str):
             price_data = results['input_image_analysis']['price_data']
             if price_data:
                 f.write(f"Product Name: {price_data.product_name}\n")
-                f.write(f"Price Range: {price_data.price_range}\n")
+                f.write(f"Initial Price: {price_data.initial_price}\n")
+                f.write(f"Collateral Price: {price_data.collateral_price}\n")
                 f.write(f"Currency: {price_data.currency}\n")
                 f.write(f"Marketplace: {price_data.marketplace}\n")
                 f.write(f"Confidence: {price_data.confidence}\n")
                 
-                # Save detailed analysis for input image
+                # Save collateral value explanation for input image
                 if hasattr(price_data, 'additional_info') and price_data.additional_info:
-                    f.write(f"\nDetailed Analysis:\n{price_data.additional_info}\n")
+                    f.write(f"\nCollateral Value Explanation:\n{price_data.additional_info}\n")
             else:
                 f.write("Price calculation failed\n")
             
@@ -482,12 +492,11 @@ def _save_results_to_file(results: Dict, image_path: str):
                 f.write(f"  Type: {combined_info['type']}\n")
                 f.write(f"  Description: {combined_info['user_description']}\n")
                 f.write(f"  Similarity Score: {combined_info['similarity_score']:.3f}\n")
-                f.write(f"  Price Range: {combined_info['price_range']}\n")
+                f.write(f"  Initial Price: {combined_info['initial_price']}\n")
+                f.write(f"  Collateral Price: {combined_info['collateral_price']}\n")
                 f.write(f"  Currency: {combined_info['currency']}\n")
                 f.write(f"  Marketplace: {combined_info['marketplace']}\n")
                 f.write(f"  Confidence: {combined_info['confidence']}\n")
-                
-                # No detailed analysis saved for similar images - keep it clean
                 f.write("\n")
             
             # Summary
@@ -543,16 +552,18 @@ def _convert_results_to_json(results: Dict) -> Dict:
             price_data = input_analysis['price_data']
             
             if hasattr(price_data, 'additional_info') and price_data.additional_info:
-                # No limit on additional_info - get the complete analysis
-                full_info = price_data.additional_info
+                # Get the brief collateral value explanation
+                collateral_explanation = price_data.additional_info
             
             json_results['input_image_analysis']['price_data'] = {
                 'product_name': price_data.product_name,
-                'price_range': price_data.price_range,
+                'initial_price': price_data.initial_price,
+                'collateral_price': price_data.collateral_price,
+                'price_range': price_data.price_range,  # For backward compatibility
                 'currency': price_data.currency,
                 'marketplace': price_data.marketplace,
                 'confidence': price_data.confidence,
-                'additional_info': full_info
+                'collateral_explanation': collateral_explanation
             }
         
         # Convert similar images analysis
@@ -566,7 +577,9 @@ def _convert_results_to_json(results: Dict) -> Dict:
                 'type': combined_info['type'],
                 'user_description': combined_info['user_description'],
                 'similarity_score': combined_info['similarity_score'],
-                'price_range': combined_info['price_range'],
+                'initial_price': combined_info['initial_price'],
+                'collateral_price': combined_info['collateral_price'],
+                'price_range': combined_info['price_range'],  # For backward compatibility
                 'currency': combined_info['currency'],
                 'marketplace': combined_info['marketplace'],
                 'confidence': combined_info['confidence']

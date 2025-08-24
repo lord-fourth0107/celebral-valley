@@ -24,11 +24,14 @@ except ImportError:
 
 class ProductPriceResult(BaseModel):
     product_name: str
-    price_range: str
+    initial_price: str  # Market price for the product
+    collateral_price: str  # Conservative collateral value (typically 60-80% of market value)
     currency: str
     marketplace: str
     confidence: str
     additional_info: Optional[str] = None
+    # Keep price_range for backward compatibility
+    price_range: str = ""
 
 class AnthropicClient:
     def __init__(self):
@@ -40,27 +43,51 @@ class AnthropicClient:
             raise Exception(f"Error setting up API key: {e}")
         
         self.client = anthropic.Anthropic(api_key=API_KEY)
+        
+        # Original pricing tool
+        self.pricing_tool = {
+            "name": "get_used_product_price",
+            "description": "Looks up the current market price for a used or vintage product on marketplaces like eBay. Requires a specific product name and its condition.",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "product_name": {
+                        "type": "string",
+                        "description": "The specific name, brand, and model of the product. Example: 'Sony a7 III Mirrorless Camera'."
+                    },
+                    "condition": {
+                        "type": "string",
+                        "description": "The condition and age of the item. Example: 'used, 5 years old, good condition'."
+                    },
+                    "category": {
+                        "type": "string",
+                        "description": "The product's category, e.g., 'Electronics', 'Handbags', 'Watches'."
+                    }
+                },
+                "required": ["product_name", "condition"]
+            }
+        }
 
-    def comprehensive_product_search(self, image_base64: str, image_format: str, 
-                                   product_description: str, search_context: str = "") -> ProductPriceResult:
+    def search_product_price_from_image(self, image_path: str, additional_context: str = "") -> ProductPriceResult:
         """
-        Comprehensive search combining base64 image analysis with product description for enhanced price search
+        Analyze an image and search for product price information using Claude's web search capability
         
         Args:
-            image_base64: Base64 encoded image data
-            image_format: Image format (e.g., 'jpeg', 'png', 'webp')
-            product_description: Detailed description of the product
-            search_context: Additional context for the search (e.g., "new", "used", "refurbished", age, condition)
+            image_path: Path to the image file
+            additional_context: Additional context about the product or search requirements
             
         Returns:
-            ProductPriceResult with comprehensive price information
+            ProductPriceResult with price information
         """
         try:
-            # Clean the base64 string if it has a data URL prefix
-            if image_base64.startswith('data:image/'):
-                image_base64 = image_base64.split(',')[1]
+            # Read and encode the image
+            with open(image_path, "rb") as image_file:
+                image_data = base64.b64encode(image_file.read()).decode('utf-8')
             
-            # Create a comprehensive prompt that combines image analysis with description search
+            # Determine image format from file extension
+            image_format = image_path.split('.')[-1].lower()
+            
+            # Create the prompt for Claude
             prompt = f"""
             You are an expert asset valuation agent working to assess the value of assets so they can be used as collateral for loans or financial instruments. Your assessment must be accurate, conservative, and suitable for collateral purposes.
             
@@ -74,7 +101,8 @@ class AnthropicClient:
             5. Note if this is a new, used, or refurbished item
             6. From the additional context {additional_context}, make an estimate of the price of the product after depreciating its values as per its age.
             7. Assess the asset's suitability as collateral (liquidity, market stability, depreciation factors)
-            8. CRITICAL: Account for depreciation according to the item's age - older items should have significantly lower values than new ones, considering factors like:
+            8. Provide a conservative collateral value estimate (typically 60-80% of market value for risk assessment)
+            9. CRITICAL: Account for depreciation according to the item's age - older items should have significantly lower values than new ones, considering factors like:
                 - Technology obsolescence (electronics, phones, computers)
                 - Fashion/trend changes (clothing, accessories)
                 - Mechanical wear and tear (watches, vehicles, machinery)
@@ -86,12 +114,14 @@ class AnthropicClient:
             IMPORTANT: As a collateral assessment agent, prioritize accuracy and conservatism. Your valuation will be used for financial decision-making, so ensure all price information is current and well-sourced. Always factor in age-based depreciation to provide realistic, conservative values suitable for collateral purposes.
             
             Format your response with clear price information, sources, collateral assessment details, and explicit depreciation calculations based on age. Be specific about price ranges and include risk factors that could affect collateral value.
+            
+            ADDITIONAL_INFO REQUIREMENT: In the additional_info field, provide ONLY a brief explanation (3 sentences maximum) of why the collateral value is calculated as shown. Focus on the key factors that justify the conservative valuation, such as depreciation, market conditions, or specific risks. Keep it extremely concise and focused on collateral value justification.
             """
             
-            # Create the message with image, description, and web search capability
+            # Create the message with image and web search capability
             message = self.client.messages.create(
                 model="claude-opus-4-1-20250805",
-                max_tokens=4000,  # Increased for comprehensive analysis
+                max_tokens=2000,
                 messages=[
                     {
                         "role": "user",
@@ -105,7 +135,7 @@ class AnthropicClient:
                                 "source": {
                                     "type": "base64",
                                     "media_type": f"image/{image_format}",
-                                    "data": image_base64
+                                    "data": image_data
                                 }
                             }
                         ]
@@ -113,21 +143,24 @@ class AnthropicClient:
                 ]
             )
             
-            # Parse the response to extract comprehensive information
+            # Parse the response to extract price information
             response_text = message.content[0].text
             
             # Extract product information from the response
             product_name = self._extract_product_name(response_text)
-            price_range = self._extract_price_range(response_text)
+            initial_price = self._extract_initial_price(response_text)
+            collateral_price = self._extract_collateral_price(response_text)
             currency = self._extract_currency(response_text)
             marketplace = self._extract_marketplace(response_text)
             
             return ProductPriceResult(
                 product_name=product_name,
-                price_range=price_range,
+                initial_price=initial_price,
+                collateral_price=collateral_price,
+                price_range=initial_price,  # For backward compatibility
                 currency=currency,
                 marketplace=marketplace,
-                confidence="high" if price_range else "medium",
+                confidence="high" if initial_price else "medium",
                 additional_info=response_text
             )
             
@@ -172,6 +205,8 @@ class AnthropicClient:
             IMPORTANT: As a collateral assessment agent, prioritize accuracy and conservatism. Your valuation will be used for financial decision-making, so ensure all price information is current and well-sourced. Always factor in age-based depreciation to provide realistic, conservative values suitable for collateral purposes.
             
             Focus on getting accurate, current pricing information suitable for collateral assessment, with explicit depreciation calculations based on age.
+            
+            ADDITIONAL_INFO REQUIREMENT: In the additional_info field, provide ONLY a brief explanation (3 sentences maximum) of why the collateral value is calculated as shown. Focus on the key factors that justify the conservative valuation, such as depreciation, market conditions, or specific risks. Keep it extremely concise and focused on collateral value justification.
             """
             
             # Use Claude with web search capability
@@ -185,16 +220,19 @@ class AnthropicClient:
             
             # Extract information from the response
             product_name = self._extract_product_name(response_text)
-            price_range = self._extract_price_range(response_text)
+            initial_price = self._extract_price_range(response_text)  # Use existing method for now
+            collateral_price = self._extract_collateral_price(response_text)
             currency = self._extract_currency(response_text)
             marketplace = self._extract_marketplace(response_text)
             
             return ProductPriceResult(
                 product_name=product_name,
-                price_range=price_range,
+                initial_price=initial_price,
+                collateral_price=collateral_price,
+                price_range=initial_price,  # For backward compatibility
                 currency=currency,
                 marketplace=marketplace,
-                confidence="high" if price_range else "medium",
+                confidence="high" if initial_price else "medium",
                 additional_info=response_text
             )
             
@@ -234,6 +272,119 @@ class AnthropicClient:
                 "status": "error"
             }
 
+    def get_response_from_claude(self, prompt: str, stop_sequences: Optional[List[str]] = None) -> str:
+        """
+        Get a response from Claude using text prompt
+        """
+        try:
+            message = self.client.messages.create(
+                model="claude-opus-4-1-20250805",
+                max_tokens=1000,
+                messages=[{"role": "user", "content": prompt}],
+                stop_sequences=stop_sequences
+            )
+            return message.content[0].text
+        except Exception as e:
+            raise Exception(f"Error getting response from Claude: {e}")
+
+    def comprehensive_product_search(self, image_base64: str, image_format: str, 
+                                   product_description: str, search_context: str = "") -> ProductPriceResult:
+        """
+        Comprehensive search combining base64 image analysis with product description for enhanced price search
+        
+        Args:
+            image_base64: Base64 encoded image data
+            image_format: Image format (e.g., 'jpeg', 'png', 'webp')
+            product_description: Detailed description of the product
+            search_context: Additional context for the search (e.g., "new", "used", "refurbished", age, condition)
+            
+        Returns:
+            ProductPriceResult with comprehensive price information
+        """
+        try:
+            # Clean the base64 string if it has a data URL prefix
+            if image_base64.startswith('data:image/'):
+                image_base64 = image_base64.split(',')[1]
+            
+            # Create a comprehensive prompt that combines image analysis with description search
+            prompt = f"""
+            You are an expert asset valuation agent working to assess the value of assets so they can be used as collateral for loans or financial instruments. Your assessment must be accurate, conservative, and suitable for collateral purposes.
+            
+            Analyze this product image and perform a web search to find the current market price range.
+            
+            Focus on:
+            1. Identify the exact product (brand, model, specifications)
+            2. Search current market prices across major retailers and marketplaces
+            3. Provide a clear price range (e.g., "$150-$250" or "Starting at $199")
+            4. List 2-3 specific sources where this product is available
+            5. Note if this is a new, used, or refurbished item
+            6. From the additional context {search_context}, make an estimate of the price of the product after depreciating its values as per its age.
+            7. Assess the asset's suitability as collateral (liquidity, market stability, depreciation factors)
+            8. CRITICAL: Account for depreciation according to the item's age - older items should have significantly lower values than new ones, considering factors like:
+                - Technology obsolescence (electronics, phones, computers)
+                - Fashion/trend changes (clothing, accessories)
+                - Mechanical wear and tear (watches, vehicles, machinery)
+                - Market demand shifts over time
+                - Brand value changes and market positioning
+            
+            Additional context: {search_context}
+            
+            IMPORTANT: As a collateral assessment agent, prioritize accuracy and conservatism. Your valuation will be used for financial decision-making, so ensure all price information is current and well-sourced. Always factor in age-based depreciation to provide realistic, conservative values suitable for collateral purposes.
+            
+            Format your response with clear price information, sources, collateral assessment details, and explicit depreciation calculations based on age. Be specific about price ranges and include risk factors that could affect collateral value.
+            
+            ADDITIONAL_INFO REQUIREMENT: In the additional_info field, provide ONLY a brief explanation (3 sentences maximum) of why the collateral value is calculated as shown. Focus on the key factors that justify the conservative valuation, such as depreciation, market conditions, or specific risks. Keep it extremely concise and focused on collateral value justification.
+            """
+            
+            # Create the message with image, description, and web search capability
+            message = self.client.messages.create(
+                model="claude-opus-4-1-20250805",
+                max_tokens=4000,  # Increased for comprehensive analysis
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": prompt
+                            },
+                            {
+                                "type": "image",
+                                "source": {
+                                    "type": "base64",
+                                    "media_type": f"image/{image_format}",
+                                    "data": image_base64
+                                }
+                            }
+                        ]
+                    }
+                ]
+            )
+            
+            # Parse the response to extract comprehensive information
+            response_text = message.content[0].text
+            
+            # Extract product information from the response
+            product_name = self._extract_product_name(response_text)
+            initial_price = self._extract_initial_price(response_text)
+            collateral_price = self._extract_collateral_price(response_text)
+            currency = self._extract_currency(response_text)
+            marketplace = self._extract_marketplace(response_text)
+            
+            return ProductPriceResult(
+                product_name=product_name,
+                initial_price=initial_price,
+                collateral_price=collateral_price,
+                price_range=initial_price,  # For backward compatibility
+                currency=currency,
+                marketplace=marketplace,
+                confidence="high" if initial_price else "medium",
+                additional_info=response_text
+            )
+            
+        except Exception as e:
+            raise Exception(f"Error searching product price from image: {e}")
+
     def _extract_product_name(self, text: str) -> str:
         """Extract product name from Claude's response"""
         # Simple extraction - you might want to use more sophisticated NLP
@@ -242,6 +393,44 @@ class AnthropicClient:
             if any(keyword in line.lower() for keyword in ['product', 'item', 'brand', 'model']):
                 return line.strip()
         return "Product name not found"
+
+    def _extract_initial_price(self, text: str) -> str:
+        """Extract initial market price from Claude's response"""
+        # Use the existing price extraction method for now
+        return self._extract_price_range(text)
+
+    def _extract_collateral_price(self, text: str) -> str:
+        """Extract collateral price (conservative value) from Claude's response"""
+        import re
+        
+        # Look for collateral-specific patterns
+        collateral_patterns = [
+            r'collateral.*?\$(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)',
+            r'collateral.*?(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\s*%',
+            r'conservative.*?\$(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)',
+            r'risk.*?value.*?\$(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)'
+        ]
+        
+        for pattern in collateral_patterns:
+            matches = re.findall(pattern, text, re.IGNORECASE)
+            if matches:
+                return f"${matches[0]}"
+        
+        # If no specific collateral price found, calculate as 70% of initial price
+        initial_price = self._extract_price_range(text)
+        if initial_price and initial_price != "Price range not found":
+            # Extract numeric value from price
+            price_match = re.search(r'\$(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)', initial_price)
+            if price_match:
+                try:
+                    price_str = price_match.group(1).replace(',', '')
+                    price_num = float(price_str)
+                    collateral_price = price_num * 0.7  # 70% of market value
+                    return f"${collateral_price:,.2f}"
+                except ValueError:
+                    pass
+        
+        return "Collateral price not calculated"
 
     def _extract_price_range(self, text: str) -> str:
         """Extract price range from Claude's response"""
@@ -377,7 +566,8 @@ if __name__ == "__main__":
         print("\n Analysis Results:")
         print("=" * 50)
         print(f"Product: {result.product_name}")
-        print(f"Price Range: {result.price_range}")
+        print(f"Initial Price: {result.initial_price}")
+        print(f"Collateral Price: {result.collateral_price}")
         print(f"Currency: {result.currency}")
         print(f"Marketplace: {result.marketplace}")
         print(f"Confidence: {result.confidence}")

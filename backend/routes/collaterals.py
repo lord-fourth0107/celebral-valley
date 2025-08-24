@@ -3,12 +3,46 @@ from typing import List, Optional
 
 from dataModels.collateral import (
     Collateral, CollateralCreate, CollateralCreateSimple, CollateralUpdate, CollateralResponse, 
-    CollateralListResponse, CollateralSearchParams, CollateralStatus, CollateralApproveRequest, CollateralCreateRequest
+    CollateralListResponse, CollateralSearchParams, CollateralStatus, CollateralApproveRequest,
+    ImageAnalysisRequest, ImageAnalysisResponse
 )
 from db.collateral import CollateralDB
 from db.user import UserDB
+from rag3_llampi_integration import integrate_rag3_with_llampi
 
 router = APIRouter(prefix="/collaterals", tags=["collaterals"])
+
+
+@router.post("/analyze-image", response_model=ImageAnalysisResponse, status_code=200)
+async def analyze_image_for_collateral(request: ImageAnalysisRequest):
+    """Analyze an image for collateral assessment using RAG3-LLAMPI integration"""
+    try:
+        # Validate user exists
+        user = await UserDB.get_user_by_id(request.user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Run the RAG3-LLAMPI integration
+        results = integrate_rag3_with_llampi(
+            input_image_path=request.image_path,
+            user_description=request.user_description,
+            top_k=request.top_k,
+            score_threshold=request.score_threshold,
+            verbose=False,  # No console output for API
+            return_json=True  # Return JSON format
+        )
+        
+        if "error" in results:
+            raise HTTPException(status_code=500, detail=f"Analysis failed: {results['error']}")
+        
+        # Convert the results to match our response model
+        # The results are already in JSON format from the integration
+        return ImageAnalysisResponse(**results)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Analysis error: {str(e)}")
 
 
 @router.post("/", response_model=CollateralResponse, status_code=201)

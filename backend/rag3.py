@@ -1091,7 +1091,9 @@ def integrate_rag3_with_llampi(input_image_path: str,
                         'user_description': similar_img['user_description'],
                         'detailed_description': similar_img['detailed_description'],
                         'similarity_score': similar_img['score'],
-                        'price_range': similar_img_price.price_range,
+                        'initial_price': similar_img_price.initial_price,
+                        'collateral_price': similar_img_price.collateral_price,
+                        'price_range': similar_img_price.price_range,  # For backward compatibility
                         'currency': similar_img_price.currency,
                         'marketplace': similar_img_price.marketplace,
                         'confidence': similar_img_price.confidence,
@@ -1114,7 +1116,9 @@ def integrate_rag3_with_llampi(input_image_path: str,
                         'user_description': similar_img['user_description'],
                         'detailed_description': similar_img['detailed_description'],
                         'similarity_score': similar_img['score'],
-                        'price_range': 'Price calculation failed',
+                        'initial_price': 'Price calculation failed',
+                        'collateral_price': 'Price calculation failed',
+                        'price_range': 'Price calculation failed',  # For backward compatibility
                         'currency': 'Unknown',
                         'marketplace': 'Unknown',
                         'confidence': 'low',
@@ -1133,7 +1137,9 @@ def integrate_rag3_with_llampi(input_image_path: str,
             'price_data': input_image_price,
             'analysis_summary': {
                 'name': input_image_price.product_name if input_image_price else 'Unknown',
-                'price_range': input_image_price.price_range if input_image_price else 'Price calculation failed',
+                'initial_price': input_image_price.initial_price if input_image_price else 'Price calculation failed',
+                'collateral_price': input_image_price.collateral_price if input_image_price else 'Price calculation failed',
+                'price_range': input_image_price.price_range if input_image_price else 'Price calculation failed',  # For backward compatibility
                 'currency': input_image_price.currency if input_image_price else 'Unknown',
                 'marketplace': input_image_price.marketplace if input_image_price else 'Unknown',
                 'confidence': input_image_price.confidence if input_image_price else 'low'
@@ -1172,7 +1178,8 @@ def integrate_rag3_with_llampi(input_image_path: str,
         print(f"   User Description: {user_description}")
         if input_image_price:
             print(f"   Product Name: {input_image_price.product_name}")
-            print(f"   Price Range: {input_image_price.price_range}")
+            print(f"   Initial Price: {input_image_price.initial_price}")
+            print(f"   Collateral Price: {input_image_price.collateral_price}")
             print(f"   Currency: {input_image_price.currency}")
             print(f"   Marketplace: {input_image_price.marketplace}")
             print(f"   Confidence: {input_image_price.confidence}")
@@ -1186,7 +1193,8 @@ def integrate_rag3_with_llampi(input_image_path: str,
             print(f"   Type: {img_analysis['combined_info']['type']}")
             print(f"   User Description: {img_analysis['combined_info']['user_description']}")
             print(f"   Similarity Score: {img_analysis['combined_info']['similarity_score']:.3f}")
-            print(f"   Price Range: {img_analysis['combined_info']['price_range']}")
+            print(f"   Initial Price: {img_analysis['combined_info']['initial_price']}")
+            print(f"   Collateral Price: {img_analysis['combined_info']['collateral_price']}")
             print(f"   Currency: {img_analysis['combined_info']['currency']}")
             print(f"   Marketplace: {img_analysis['combined_info']['marketplace']}")
             print(f"   Confidence: {img_analysis['combined_info']['confidence']}")

@@ -1,5 +1,8 @@
 from fastapi import APIRouter, HTTPException, Query
 from typing import List, Optional
+from datetime import datetime, timedelta
+import base64
+import re
 
 from dataModels.collateral import (
     Collateral, CollateralCreateRequest, CollateralCreateSimple, CollateralUpdate, CollateralResponse, 
@@ -47,44 +50,162 @@ async def analyze_image_for_collateral(request: ImageAnalysisRequest):
 
 @router.post("/", response_model=CollateralResponse, status_code=201)
 async def create_collateral(collateral_data: CollateralCreateRequest):
-    """Create a new collateral with basic info and mocked data"""
+    """Create a new collateral with RAG3 image analysis and LLM pricing"""
     try:
         # Validate user exists
         user = await UserDB.get_user_by_id(collateral_data.user_id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         
-        # TODO: Process the collateral creation
-        # This would typically involve:
-        # 1. Image analysis and valuation
-        # 2. Risk assessment
-        # 3. Loan limit calculation
-        # 4. Interest rate determination
-        # 5. Due date calculation
+        if not collateral_data.images:
+            raise HTTPException(status_code=400, detail="No images provided")
         
-        # For now, mock the rest of the data
+        # Initialize RAG3 system for image analysis
+        try:
+            from rag3 import ImageRAGSystem
+            rag_system = ImageRAGSystem()
+            print(f"✅ RAG3 system initialized for user {collateral_data.user_id}")
+        except Exception as e:
+            print(f"❌ Failed to initialize RAG3 system: {e}")
+            raise HTTPException(status_code=500, detail=f"Failed to initialize image analysis system: {str(e)}")
+        
+        # Initialize LLM client for pricing
+        try:
+            from llmapi import AnthropicClient
+            llm_client = AnthropicClient()
+            print(f"✅ LLM client initialized for pricing analysis")
+        except Exception as e:
+            print(f"❌ Failed to initialize LLM client: {e}")
+            raise HTTPException(status_code=500, detail=f"Failed to initialize pricing system: {str(e)}")
+        
+        # Process each image through RAG3 and get pricing
+        image_analyses = []
+        total_estimated_value = 0.0
+        
+        for i, image_path in enumerate(collateral_data.images):
+            try:
+                print(f"🔍 Processing image {i+1}/{len(collateral_data.images)}: {image_path}")
+                
+                # Step 1: Find similar images using RAG3
+                similar_images = rag_system.find_similar_images(
+                    query_image_source=image_path,
+                    top_k=3,
+                    score_threshold=0.7,
+                    exclude_query_image=True
+                )
+                print(f"   Found {len(similar_images)} similar images")
+                
+                # Step 2: Get pricing for the current image using LLM
+                # Convert image to base64 for LLM API
+                with open(image_path, "rb") as image_file:
+                    image_base64 = base64.b64encode(image_file.read()).decode('utf-8')
+                
+                # Get pricing using comprehensive search
+                pricing_result = llm_client.comprehensive_product_search(
+                    image_base64=image_base64,
+                    image_format="jpeg",  # You might want to detect this dynamically
+                    product_description=collateral_data.description,
+                    search_context=f"Collateral item: {collateral_data.name}"
+                )
+                
+                print(f"   💰 Price analysis: {pricing_result.price_range} {pricing_result.currency}")
+                
+                # Step 3: Calculate loan limit (typically 60-80% of estimated value)
+                # Extract numeric value from price range
+                price_match = re.search(r'[\d,]+', pricing_result.price_range)
+                if price_match:
+                    estimated_value = float(price_match.group().replace(',', ''))
+                    loan_limit = estimated_value * 0.7  # 70% of estimated value
+                    total_estimated_value += estimated_value
+                else:
+                    estimated_value = 1000.0  # Default fallback
+                    loan_limit = 700.0
+                
+                # Step 4: Compile image analysis results
+                image_analysis = {
+                    "image_path": image_path,
+                    "similar_images": similar_images,
+                    "pricing_analysis": {
+                        "product_name": pricing_result.product_name,
+                        "price_range": pricing_result.price_range,
+                        "currency": pricing_result.currency,
+                        "marketplace": pricing_result.marketplace,
+                        "confidence": pricing_result.confidence,
+                        "estimated_value": estimated_value,
+                        "loan_limit": loan_limit
+                    },
+                    "rag3_metadata": {
+                        "similar_images_found": len(similar_images),
+                        "top_similarity_score": max([img['score'] for img in similar_images]) if similar_images else 0.0
+                    }
+                }
+                
+                image_analyses.append(image_analysis)
+                
+            except Exception as e:
+                print(f"❌ Error processing image {image_path}: {e}")
+                # Continue with other images instead of failing completely
+                image_analysis = {
+                    "image_path": image_path,
+                    "error": str(e),
+                    "pricing_analysis": {
+                        "estimated_value": 1000.0,
+                        "loan_limit": 700.0
+                    }
+                }
+                image_analyses.append(image_analysis)
+        
+        # Calculate overall loan parameters
+        if total_estimated_value > 0:
+            overall_loan_limit = total_estimated_value * 0.7
+            interest_rate = 0.12  # 12% annual interest
+            due_date = datetime.now() + timedelta(days=365)  # 1 year loan
+        else:
+            overall_loan_limit = 1000.0
+            interest_rate = 0.15  # Higher interest for uncertain valuation
+            due_date = datetime.now() + timedelta(days=180)  # 6 month loan
+        
+        # Create the collateral with calculated values
         collateral = await CollateralDB.create_collateral_simple(CollateralCreateSimple(
             user_id=collateral_data.user_id
         ))
         
-        # Update the collateral with the provided data
+        # Update with comprehensive analysis results
         update_data = CollateralUpdate(
             images=collateral_data.images,
+            loan_amount=0.0,  # No loan yet, just collateral assessment
+            loan_limit=overall_loan_limit,
+            interest=interest_rate,
+            due_date=due_date,
             metadata={
                 "name": collateral_data.name,
                 "description": collateral_data.description,
                 "original_images": collateral_data.images,
-                "status": "awaiting_processing"
+                "status": "pending",
+                "image_analyses": image_analyses,
+                "total_estimated_value": total_estimated_value,
+                "overall_loan_limit": overall_loan_limit,
+                "interest_rate": interest_rate,
+                "due_date": due_date.isoformat(),
+                "analysis_timestamp": datetime.now().isoformat(),
+                "rag3_integration": True
             }
         )
         
         updated_collateral = await CollateralDB.update_collateral(collateral.id, update_data)
+        
+        print(f"Collateral created successfully for user {collateral_data.user_id}")
+        print(f"   Total estimated value: ${total_estimated_value:,.2f}")
+        print(f"   Loan limit: ${overall_loan_limit:,.2f}")
+        print(f"   Interest rate: {interest_rate*100}%")
+        
         return updated_collateral
         
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+        print(f"❌ Collateral creation failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to create collateral: {str(e)}")
 
 
 @router.post("/{collateral_id}/approve", response_model=CollateralResponse)

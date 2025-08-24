@@ -1,5 +1,5 @@
 import anthropic
-import os
+import os 
 import base64
 from typing import Optional, List, Dict, Any
 from pydantic import BaseModel
@@ -46,28 +46,28 @@ class AnthropicClient:
         
         # Original pricing tool
         self.pricing_tool = {
-            "name": "get_used_product_price",
-            "description": "Looks up the current market price for a used or vintage product on marketplaces like eBay. Requires a specific product name and its condition.",
-            "input_schema": {
-                "type": "object",
-                "properties": {
-                    "product_name": {
-                        "type": "string",
-                        "description": "The specific name, brand, and model of the product. Example: 'Sony a7 III Mirrorless Camera'."
-                    },
-                    "condition": {
-                        "type": "string",
-                        "description": "The condition and age of the item. Example: 'used, 5 years old, good condition'."
-                    },
-                    "category": {
-                        "type": "string",
-                        "description": "The product's category, e.g., 'Electronics', 'Handbags', 'Watches'."
-                    }
+        "name": "get_used_product_price",
+        "description": "Looks up the current market price for a used or vintage product on marketplaces like eBay. Requires a specific product name and its condition.",
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "product_name": {
+                    "type": "string",
+                    "description": "The specific name, brand, and model of the product. Example: 'Sony a7 III Mirrorless Camera'."
                 },
-                "required": ["product_name", "condition"]
-            }
+                "condition": {
+                    "type": "string",
+                    "description": "The condition and age of the item. Example: 'used, 5 years old, good condition'."
+                },
+                "category": {
+                    "type": "string",
+                    "description": "The product's category, e.g., 'Electronics', 'Handbags', 'Watches'."
+                }
+            },
+            "required": ["product_name", "condition"]
         }
-
+    }
+            
     def search_product_price_from_image(self, image_path: str, additional_context: str = "") -> ProductPriceResult:
         """
         Analyze an image and search for product price information using Claude's web search capability

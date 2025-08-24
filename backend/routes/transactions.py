@@ -48,7 +48,9 @@ async def deposit_money(deposit_request: DepositRequest):
         # Process balances
         try:
             await BalanceService.process_transaction_balances(transaction.id)
-            await crossmint.transfer("0xcecfC798C3A37B754628150fDCAE52a84B092eC2",deposit_request.user_id,deposit_request.amount)
+            print(f"Processing Crossmint transfer for user {deposit_request.user_id}, amount: {deposit_request.amount}")
+            crossmint_result = await crossmint.transfer("0xcecfC798C3A37B754628150fDCAE52a84B092eC2",deposit_request.user_id,deposit_request.amount)
+            print(f"Crossmint transfer result: {crossmint_result}")
         except ValueError as e:
             # If balance processing fails, mark transaction as failed
             await TransactionDB.mark_transaction_failed(transaction.id, str(e))

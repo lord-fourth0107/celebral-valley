@@ -175,13 +175,14 @@ async def initialize_system():
         # Organization account with initial fund
         await conn.execute("""
             INSERT INTO accounts (
-                id, user_id, account_number, status, loan_balance, investment_balance, created_at, updated_at
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                id, user_id, account_number, status, wallet_id, loan_balance, investment_balance, created_at, updated_at
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             "org_account_001",
             org_user_id,
             "ORG001",
             "active",
+            "org_wallet_001",  # Organization wallet ID
             0.00,  # Organization never has loan balance
             100000.00,  # Initial fund
             datetime.utcnow(),
@@ -192,13 +193,14 @@ async def initialize_system():
         # Admin account
         await conn.execute("""
             INSERT INTO accounts (
-                id, user_id, account_number, status, loan_balance, investment_balance, created_at, updated_at
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                id, user_id, account_number, status, wallet_id, loan_balance, investment_balance, created_at, updated_at
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             "admin_account_001",
             admin_user_id,
             "ADMIN001",
             "active",
+            "admin_wallet_001",  # Admin wallet ID
             0.00,
             0.00,
             datetime.utcnow(),
@@ -217,13 +219,14 @@ async def initialize_system():
         for account_id, user_id, account_number in user_accounts:
             await conn.execute("""
                 INSERT INTO accounts (
-                    id, user_id, account_number, status, loan_balance, investment_balance, created_at, updated_at
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    id, user_id, account_number, status, wallet_id, loan_balance, investment_balance, created_at, updated_at
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
                 account_id,
                 user_id,
                 account_number,
                 "active",
+                f"{user_id}_wallet",  # User wallet ID based on user_id
                 0.00,
                 0.00,
                 datetime.utcnow(),

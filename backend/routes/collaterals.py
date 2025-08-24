@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Query
 from typing import List, Optional
 
 from dataModels.collateral import (
-    Collateral, CollateralCreate, CollateralCreateSimple, CollateralUpdate, CollateralResponse, 
+    Collateral, CollateralCreateRequest, CollateralCreateSimple, CollateralUpdate, CollateralResponse, 
     CollateralListResponse, CollateralSearchParams, CollateralStatus, CollateralApproveRequest,
     ImageAnalysisRequest, ImageAnalysisResponse
 )

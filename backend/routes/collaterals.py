@@ -9,8 +9,14 @@ from dataModels.collateral import (
     CollateralListResponse, CollateralSearchParams, CollateralStatus, CollateralApproveRequest,
     ImageAnalysisRequest, ImageAnalysisResponse
 )
+from dataModels.transaction import (
+    TransactionCreate, TransactionType, ExtendLoanRequest, TransactionResponse
+)
 from db.collateral import CollateralDB
 from db.user import UserDB
+from db.account import AccountDB
+from db.transaction import TransactionDB
+from services.balance_service import BalanceService
 from rag3_llampi_integration import integrate_rag3_with_llampi
 
 router = APIRouter(prefix="/collaterals", tags=["collaterals"])
@@ -275,6 +281,99 @@ async def update_collateral(collateral_id: str, collateral_data: CollateralUpdat
             raise HTTPException(status_code=500, detail="Failed to update collateral")
         
         return updated_collateral
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+
+@router.post("/{collateral_id}/extend-loan", response_model=TransactionResponse, status_code=201)
+async def extend_loan(collateral_id: str, extend_loan_request: ExtendLoanRequest):
+    """Extend a loan - creates a fee transaction and updates collateral loan amount"""
+    try:
+        # Validate collateral exists and is approved
+        collateral = await CollateralDB.get_collateral_by_id(collateral_id)
+        if not collateral:
+            raise HTTPException(status_code=404, detail="Collateral not found")
+        
+        if collateral.status.value != "approved":
+            raise HTTPException(status_code=400, detail=f"Collateral is not approved. Current status: {collateral.status.value}")
+        
+        # Validate account exists
+        account = await AccountDB.get_account_by_id(extend_loan_request.account_id)
+        if not account:
+            raise HTTPException(status_code=404, detail="Account not found")
+        
+        # Validate user exists
+        user = await UserDB.get_user_by_id(extend_loan_request.user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Create fee transaction data
+        transaction_data = TransactionCreate(
+            account_id=extend_loan_request.account_id,
+            user_id=extend_loan_request.user_id,
+            transaction_type=TransactionType.FEE,
+            amount=extend_loan_request.fee,
+            description=extend_loan_request.description or f"Loan extension fee for {extend_loan_request.extension_days} days",
+            reference_number=extend_loan_request.reference_number,
+            collateral_id=collateral_id,
+            metadata={
+                **(extend_loan_request.metadata or {}),
+                "extension_days": extend_loan_request.extension_days,
+                "extension_fee": str(extend_loan_request.fee),
+                "transaction_purpose": "loan_extension"
+            }
+        )
+        
+        # Create transaction
+        transaction = await TransactionDB.create_transaction(transaction_data)
+        
+        # Process loan extension (fee increases loan balance, not investment balance)
+        try:
+            # Get current account balances
+            account = await AccountDB.get_account_by_id(extend_loan_request.account_id)
+            current_loan_balance = account.loan_balance
+            current_investment_balance = account.investment_balance
+            
+            # For loan extension, fee increases loan balance
+            new_loan_balance = float(current_loan_balance) + float(extend_loan_request.fee)
+            
+            # Update account balances directly
+            await AccountDB.update_account_balances(
+                account_id=extend_loan_request.account_id,
+                loan_balance=new_loan_balance,
+                investment_balance=current_investment_balance
+            )
+            
+            # Update transaction with balance information
+            await TransactionDB.update_transaction_balances(
+                transaction_id=transaction.id,
+                loan_balance_before=float(current_loan_balance),
+                loan_balance_after=float(new_loan_balance),
+                invested_balance_before=float(current_investment_balance),
+                invested_balance_after=float(current_investment_balance)
+            )
+            
+            # Mark transaction as completed
+            await TransactionDB.mark_transaction_completed(transaction.id)
+            
+            # Update collateral loan amount by adding the fee
+            new_loan_amount = float(collateral.loan_amount) + float(extend_loan_request.fee)
+            await CollateralDB.update_loan_amount(collateral_id, new_loan_amount)
+            
+            print(f"✅ Loan extended successfully:")
+            print(f"   - Fee: ${extend_loan_request.fee}")
+            print(f"   - Extension days: {extend_loan_request.extension_days}")
+            print(f"   - New loan amount: ${new_loan_amount}")
+            print(f"   - New loan balance: ${new_loan_balance}")
+            
+        except Exception as e:
+            # If processing fails, mark transaction as failed
+            await TransactionDB.mark_transaction_failed(transaction.id, str(e))
+            raise HTTPException(status_code=400, detail=str(e))
+        
+        return transaction
     except HTTPException:
         raise
     except Exception as e:

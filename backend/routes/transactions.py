@@ -105,13 +105,6 @@ async def withdraw_money(withdrawal_request: WithdrawalRequest):
             print(f"Processing Crossmint transfer for user {withdrawal_request.user_id}, amount: {withdrawal_request.amount}")
             crossmint_result = await crossmint.transfer(account.wallet_id,"lordfourth",withdrawal_request.amount)
             print(f"Crossmint transfer result: {crossmint_result}")
-            
-            # Check if Crossmint transfer failed
-            if crossmint_result.get("error", False):
-                # Revert the balance changes since Crossmint failed
-                await BalanceService.revert_transaction_balances(transaction.id)
-                await TransactionDB.mark_transaction_failed(transaction.id, f"Crossmint transfer failed: {crossmint_result.get('message', 'Unknown error')}")
-                raise HTTPException(status_code=400, detail=f"Crossmint transfer failed: {crossmint_result.get('message', 'Unknown error')}")
                 
         except ValueError as e:
             # If balance processing fails, mark transaction as failed
@@ -154,9 +147,13 @@ async def pay_loan(payment_request: PaymentRequest):
         # Create transaction
         transaction = await TransactionDB.create_transaction(transaction_data)
         
-        # Process balances
+        # Process balances and Crossmint transfer
         try:
             await BalanceService.process_transaction_balances(transaction.id)
+            print(f"Processing Crossmint transfer for payment from user {payment_request.user_id}, amount: {payment_request.amount}")
+            crossmint_result = await crossmint.transfer(account.wallet_id, "0xcecfC798C3A37B754628150fDCAE52a84B092eC2", payment_request.amount)
+            print(f"Crossmint transfer result: {crossmint_result}")
+                
         except ValueError as e:
             # If balance processing fails, mark transaction as failed
             await TransactionDB.mark_transaction_failed(transaction.id, str(e))
@@ -168,54 +165,6 @@ async def pay_loan(payment_request: PaymentRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
-
-@router.post("/extend-loan", response_model=TransactionResponse, status_code=201)
-async def extend_loan(extend_loan_request: ExtendLoanRequest):
-    """Extend a loan - creates a fee transaction"""
-    try:
-        # Validate account exists
-        account = await AccountDB.get_account_by_id(extend_loan_request.account_id)
-        if not account:
-            raise HTTPException(status_code=404, detail="Account not found")
-        
-        # Validate user exists
-        user = await UserDB.get_user_by_id(extend_loan_request.user_id)
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-        
-        # Create fee transaction data
-        transaction_data = TransactionCreate(
-            account_id=extend_loan_request.account_id,
-            user_id=extend_loan_request.user_id,
-            transaction_type=TransactionType.FEE,
-            amount=extend_loan_request.fee,
-            description=extend_loan_request.description or f"Loan extension fee for {extend_loan_request.extension_days} days",
-            reference_number=extend_loan_request.reference_number,
-            collateral_id=extend_loan_request.collateral_id,
-            metadata={
-                **(extend_loan_request.metadata or {}),
-                "extension_days": extend_loan_request.extension_days,
-                "extension_fee": str(extend_loan_request.fee),
-                "transaction_purpose": "loan_extension"
-            }
-        )
-        
-        # Create transaction
-        transaction = await TransactionDB.create_transaction(transaction_data)
-        
-        # Process balances
-        try:
-            await BalanceService.process_transaction_balances(transaction.id)
-        except ValueError as e:
-            # If balance processing fails, mark transaction as failed
-            await TransactionDB.mark_transaction_failed(transaction.id, str(e))
-            raise HTTPException(status_code=400, detail=str(e))
-        
-        return transaction
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
 @router.post("/create-loan", response_model=TransactionResponse, status_code=201)
@@ -281,9 +230,13 @@ async def create_loan(create_loan_request: CreateLoanRequest):
         # Create transaction
         transaction = await TransactionDB.create_transaction(transaction_data)
         
-        # Process balances
+        # Process balances and Crossmint transfer
         try:
             await BalanceService.process_transaction_balances(transaction.id)
+            print(f"Processing Crossmint transfer for loan disbursement to user {create_loan_request.user_id}, amount: {create_loan_request.loan_amount}")
+            crossmint_result = await crossmint.transfer("0xcecfC798C3A37B754628150fDCAE52a84B092eC2", account.wallet_id, create_loan_request.loan_amount)
+            print(f"Crossmint transfer result: {crossmint_result}")
+
         except ValueError as e:
             # If balance processing fails, mark transaction as failed
             await TransactionDB.mark_transaction_failed(transaction.id, str(e))

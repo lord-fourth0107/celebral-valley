@@ -34,7 +34,7 @@ class Crossmint:
             loop = asyncio.get_event_loop()
             response = await loop.run_in_executor(None, lambda: requests.post(url, json=payload, headers=headers))
             
-            if response.status_code == 200:
+            if response.status_code == 200 or response.status_code == 201:
                 result = response.json()
                 self.logger.info(f"Crossmint transfer successful: {result.get('id', 'unknown')}")
                 return result

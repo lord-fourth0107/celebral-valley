@@ -346,6 +346,22 @@ class CollateralDB:
         return await CollateralDB.get_collateral_by_id(collateral_id)
 
     @staticmethod
+    async def update_loan_amount(collateral_id: str, new_loan_amount: float) -> Optional[Collateral]:
+        """Update the loan amount for a collateral"""
+        query = """
+            UPDATE collaterals 
+            SET loan_amount = %s, updated_at = %s
+            WHERE id = %s
+        """
+        
+        async with db_manager.get_connection() as conn:
+            await conn.execute(query, (new_loan_amount, datetime.utcnow(), collateral_id))
+            await conn.commit()
+        
+        # Fetch the updated collateral
+        return await CollateralDB.get_collateral_by_id(collateral_id)
+
+    @staticmethod
     async def list_collaterals(search_params: CollateralSearchParams) -> Dict[str, Any]:
         """List collaterals with filtering and pagination"""
         # Build WHERE clause

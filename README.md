@@ -4,7 +4,7 @@ A comprehensive DeFi lending and borrowing platform built for hackathon implemen
 
 ## 🚀 Project Overview
 
-Celebral Valley is a decentralized finance platform that enables users to borrow against physical assets (collateral) using AI-powered valuation and blockchain technology. The platform combines traditional lending with modern DeFi principles, offering secure, transparent, and efficient lending services.
+Celebral Valley is a decentralized finance platform that enables users to borrow against physical assets (collateral) using AI-powered valuation. The platform combines traditional lending with modern DeFi principles, offering secure, transparent, and efficient lending services.
 
 ## 🏗️ Architecture
 
@@ -18,17 +18,10 @@ The project follows a modern microservices architecture with:
 
 ## ✨ Key Features
 
-### 🔐 Authentication & Security
-- JWT-based authentication system
-- Secure password hashing with bcrypt
-- Role-based access control
-- CORS middleware for cross-origin requests
-
 ### 💰 Financial Services
 - **Lending**: Borrow against physical assets
 - **Collateral Management**: AI-powered asset valuation
 - **Transaction Ledger**: Complete financial history tracking
-- **Account Management**: Multi-currency account support
 - **Balance Tracking**: Real-time balance updates
 
 ### 🤖 AI-Powered Valuation
@@ -43,7 +36,7 @@ The project follows a modern microservices architecture with:
 - Intuitive loan application flow
 - Real-time status updates
 
-### ⛓️ Blockchain Integration
+### ⛓️ Finance
 - CrossMint wallet integration
 - NFT creation for collateral
 - Smart contract integration
@@ -55,7 +48,7 @@ The project follows a modern microservices architecture with:
 - **Framework**: FastAPI (Python 3.11+)
 - **Database**: PostgreSQL with psycopg3
 - **Authentication**: JWT with python-jose
-- **AI/ML**: PyTorch, CLIP, Qdrant
+- **AI/ML**: PyTorch, CLIP, Qdrant, Anthropic
 - **Dependencies**: Poetry for package management
 - **Testing**: pytest with async support
 
@@ -268,6 +261,10 @@ poetry run pytest test_integration.py
 This project was created for hackathon purposes. Please check with the team for licensing information.
 
 ## 👥 Team
+Shubham Rastogi
+Uttam Singh
+Rohan Mishra
+Yashavika Singh
 
 - **Backend Development**: FastAPI, PostgreSQL, AI/ML
 - **Frontend Development**: React Native, Expo

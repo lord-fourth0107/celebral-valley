@@ -62,25 +62,30 @@ class AnthropicClient:
             
             # Create a comprehensive prompt that combines image analysis with description search
             prompt = f"""
-            I have both an image and a description of a product. Please analyze both and perform a comprehensive web search.
+            You are an expert asset valuation agent working to assess the value of assets so they can be used as collateral for loans or financial instruments. Your assessment must be accurate, conservative, and suitable for collateral purposes.
             
-            PRODUCT DESCRIPTION: {product_description}
-            SEARCH CONTEXT: {search_context}
+            Analyze this product image and perform a web search to find the current market price range.
             
-            Please:
-            1. Analyze the image to identify the exact product (brand, model, specifications)
-            2. Compare the image analysis with the provided description
-            3. Perform a web search using BOTH the visual information and description
-            4. Find current market prices across major retailers and marketplaces
-            5. Provide a clear price range (e.g., "$150-$250" or "Starting at $199")
-            6. List 3-4 specific sources with prices
-            7. Note if prices are for new, used, or refurbished items
-            8. Consider depreciation based on age/condition mentioned in context
-            9. Provide confidence level in your price assessment
-            10. Include any relevant market trends or pricing insights
+            Focus on:
+            1. Identify the exact product (brand, model, specifications)
+            2. Search current market prices across major retailers and marketplaces
+            3. Provide a clear price range (e.g., "$150-$250" or "Starting at $199")
+            4. List 2-3 specific sources where this product is available
+            5. Note if this is a new, used, or refurbished item
+            6. From the additional context {additional_context}, make an estimate of the price of the product after depreciating its values as per its age.
+            7. Assess the asset's suitability as collateral (liquidity, market stability, depreciation factors)
+            8. CRITICAL: Account for depreciation according to the item's age - older items should have significantly lower values than new ones, considering factors like:
+                - Technology obsolescence (electronics, phones, computers)
+                - Fashion/trend changes (clothing, accessories)
+                - Mechanical wear and tear (watches, vehicles, machinery)
+                - Market demand shifts over time
+                - Brand value changes and market positioning
             
-            Focus on getting the most accurate, current pricing information by combining visual and textual analysis.
-            Be specific about price ranges and provide actionable market intelligence.
+            Additional context: {additional_context}
+            
+            IMPORTANT: As a collateral assessment agent, prioritize accuracy and conservatism. Your valuation will be used for financial decision-making, so ensure all price information is current and well-sourced. Always factor in age-based depreciation to provide realistic, conservative values suitable for collateral purposes.
+            
+            Format your response with clear price information, sources, collateral assessment details, and explicit depreciation calculations based on age. Be specific about price ranges and include risk factors that could affect collateral value.
             """
             
             # Create the message with image, description, and web search capability
@@ -127,7 +132,107 @@ class AnthropicClient:
             )
             
         except Exception as e:
-            raise Exception(f"Error in comprehensive product search: {e}")
+            raise Exception(f"Error searching product price from image: {e}")
+
+    def get_price_range_from_description(self, product_description: str, search_context: str = "") -> ProductPriceResult:
+        """
+        Get price range for a product based on its description using web search
+        
+        Args:
+            product_description: Detailed description of the product
+            search_context: Additional context for the search (e.g., "new", "used", "refurbished")
+            
+        Returns:
+            ProductPriceResult with price information
+        """
+        try:
+            # Create a focused prompt for price search
+            prompt = f"""
+            You are an expert asset valuation agent working to assess the value of assets so they can be used as collateral for loans or financial instruments. Your assessment must be accurate, conservative, and suitable for collateral purposes.
+            
+            I need to find the current market price range for this product:
+            
+            Product Description: {product_description}
+            Search Context: {search_context}
+            
+            Please perform a web search to find:
+            1. Current market prices across major retailers
+            2. A clear price range (e.g., "$150-$250")
+            3. 2-3 specific sources with prices
+            4. Whether prices are for new, used, or refurbished items
+            5. Assess the asset's suitability as collateral (liquidity, market stability, depreciation factors)
+            6. Provide a conservative collateral value estimate (typically 60-80% of market value for risk assessment)
+            7. CRITICAL: Account for depreciation according to the item's age - older items should have significantly lower values than new ones, considering factors like:
+                - Technology obsolescence (electronics, phones, computers)
+                - Fashion/trend changes (clothing, accessories)
+                - Mechanical wear and tear (watches, vehicles, machinery)
+                - Market demand shifts over time
+                - Brand value changes and market positioning
+            
+            IMPORTANT: As a collateral assessment agent, prioritize accuracy and conservatism. Your valuation will be used for financial decision-making, so ensure all price information is current and well-sourced. Always factor in age-based depreciation to provide realistic, conservative values suitable for collateral purposes.
+            
+            Focus on getting accurate, current pricing information suitable for collateral assessment, with explicit depreciation calculations based on age.
+            """
+            
+            # Use Claude with web search capability
+            message = self.client.messages.create(
+                model="claude-opus-4-1-20250805",
+                max_tokens=2000,
+                messages=[{"role": "user", "content": prompt}]
+            )
+            
+            response_text = message.content[0].text
+            
+            # Extract information from the response
+            product_name = self._extract_product_name(response_text)
+            price_range = self._extract_price_range(response_text)
+            currency = self._extract_currency(response_text)
+            marketplace = self._extract_marketplace(response_text)
+            
+            return ProductPriceResult(
+                product_name=product_name,
+                price_range=price_range,
+                currency=currency,
+                marketplace=marketplace,
+                confidence="high" if price_range else "medium",
+                additional_info=response_text
+            )
+            
+        except Exception as e:
+            raise Exception(f"Error getting price range from description: {e}")
+
+    def get_used_product_price(self, product_name: str, condition: str, category: str = "") -> Dict[str, Any]:
+        """
+        Get used product price using the existing pricing tool
+        """
+        try:
+            prompt = f"""
+            Please search for the current market price of this used product:
+            Product: {product_name}
+            Condition: {condition}
+            Category: {category}
+            
+            Provide the price range and any relevant market information.
+            """
+            
+            response = self.get_response_from_claude(prompt)
+            
+            return {
+                "product_name": product_name,
+                "condition": condition,
+                "category": category,
+                "response": response,
+                "status": "success"
+            }
+            
+        except Exception as e:
+            return {
+                "product_name": product_name,
+                "condition": condition,
+                "category": category,
+                "error": str(e),
+                "status": "error"
+            }
 
     def _extract_product_name(self, text: str) -> str:
         """Extract product name from Claude's response"""
@@ -141,11 +246,12 @@ class AnthropicClient:
     def _extract_price_range(self, text: str) -> str:
         """Extract price range from Claude's response"""
         import re
-        # Look for price patterns like $100-$200, $100 to $200, etc.
+        
+        # First, look for price patterns like $100-$200, $100 to $200, etc.
         price_patterns = [
-            r'\$\d+(?:\.\d{2})?\s*[-–—]\s*\$\d+(?:\.\d{2})?',
-            r'\$\d+(?:\.\d{2})?\s+to\s+\$\d+(?:\.\d{2})?',
-            r'\$\d+(?:\.\d{2})?\s*-\s*\$\d+(?:\.\d{2})?'
+            r'\$\d{1,3}(?:,\d{3})*(?:\.\d{2})?\s*[-–—]\s*\$\d{1,3}(?:,\d{3})*(?:\.\d{2})?',
+            r'\$\d{1,3}(?:,\d{3})*(?:\.\d{2})?\s+to\s+\$\d{1,3}(?:,\d{3})*(?:\.\d{2})?',
+            r'\$\d{1,3}(?:,\d{3})*(?:\.\d{2})?\s*-\s*\$\d{1,3}(?:,\d{3})*(?:\.\d{2})?'
         ]
         
         for pattern in price_patterns:
@@ -153,10 +259,32 @@ class AnthropicClient:
             if matches:
                 return matches[0]
         
-        # Look for single prices
-        single_price = re.search(r'\$\d+(?:\.\d{2})?', text)
-        if single_price:
-            return f"Starting at {single_price.group()}"
+        # Look for single prices with better pattern matching
+        # This will match $4,000, $4000, $4.99, etc.
+        single_price_pattern = r'\$\d{1,3}(?:,\d{3})*(?:\.\d{2})?'
+        single_prices = re.findall(single_price_pattern, text)
+        
+        if single_prices:
+            # If multiple prices found, use the highest one (likely the main price)
+            # Convert to numbers for comparison
+            def price_to_number(price_str):
+                return float(price_str.replace('$', '').replace(',', ''))
+            
+            # Sort by price value and take the highest
+            sorted_prices = sorted(single_prices, key=price_to_number, reverse=True)
+            highest_price = sorted_prices[0]
+            
+            # Check if it's a reasonable price for luxury items
+            price_num = price_to_number(highest_price)
+            if price_num < 100:  # If price is suspiciously low
+                # Look for context clues about the actual price
+                if any(word in text.lower() for word in ['luxury', 'rolex', 'expensive', 'premium', 'high-end']):
+                    # Try to find a more reasonable price
+                    for price in sorted_prices:
+                        if price_to_number(price) > 100:
+                            return f"Starting at {price}"
+            
+            return f"Starting at {highest_price}"
         
         return "Price range not found"
 

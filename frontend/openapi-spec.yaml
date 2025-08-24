@@ -1,0 +1,355 @@
+openapi: 3.0.3
+info:
+  title: Celebral Valley Loan Valuation API
+  description: API for submitting item photos and details to get loan valuations
+  version: 1.0.0
+  contact:
+    name: Celebral Valley Team
+servers:
+  - url: https://api.celebralvalley.com/v1
+    description: Production server
+  - url: http://localhost:3000/v1
+    description: Development server
+
+paths:
+  /valuation:
+    post:
+      summary: Submit item for valuation
+      description: |
+        Submit item photos, title, and description to get a loan valuation estimate.
+        Accepts multipart/form-data with multiple image uploads.
+      operationId: submitValuation
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - itemTitle
+                - description
+                - photos
+              properties:
+                itemTitle:
+                  type: string
+                  description: Name/title of the item to be valued
+                  example: "iPhone 13 Pro"
+                  minLength: 1
+                  maxLength: 200
+                description:
+                  type: string
+                  description: Detailed description of item condition, brand, model, age, damages, etc.
+                  example: "Excellent condition iPhone 13 Pro, 128GB, Space Gray. Minimal wear, no scratches on screen. Original box and charger included. Purchased 8 months ago."
+                  minLength: 10
+                  maxLength: 2000
+                photos:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Item photos (1-4 images required)
+                  minItems: 1
+                  maxItems: 4
+                metadata:
+                  type: string
+                  description: JSON string containing additional metadata
+                  example: '{"totalPhotos": 2, "submittedAt": "2025-01-23T10:30:00.000Z", "platform": "ios"}'
+            encoding:
+              photos:
+                contentType: image/jpeg, image/png
+                style: form
+                explode: true
+      responses:
+        '200':
+          description: Valuation completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValuationResponse'
+              examples:
+                successful_valuation:
+                  summary: Successful valuation result
+                  value:
+                    success: true
+                    valuationId: "val_1234567890"
+                    estimatedValue: 450.00
+                    loanAmount: 315.00
+                    confidence: 0.92
+                    item:
+                      title: "iPhone 13 Pro"
+                      category: "Electronics"
+                      brand: "Apple"
+                      condition: "Excellent"
+                    photos:
+                      - photoId: "photo_001"
+                        url: "https://storage.celebralvalley.com/valuations/val_1234567890/photo_001.jpg"
+                        analysis:
+                          features: ["screen_condition", "body_condition", "accessories"]
+                          scores:
+                            overall: 0.95
+                            screen: 0.98
+                            body: 0.92
+                    metadata:
+                      processedAt: "2025-01-23T10:30:15.123Z"
+                      processingTimeMs: 2340
+                      aiModel: "valuation-v2.1"
+        '400':
+          description: Bad request - validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missing_photos:
+                  summary: Missing required photos
+                  value:
+                    success: false
+                    error: "VALIDATION_ERROR"
+                    message: "At least 1 photo is required"
+                    details:
+                      field: "photos"
+                      code: "REQUIRED_FIELD_MISSING"
+                invalid_title:
+                  summary: Invalid item title
+                  value:
+                    success: false
+                    error: "VALIDATION_ERROR"
+                    message: "Item title must be between 1 and 200 characters"
+                    details:
+                      field: "itemTitle"
+                      code: "INVALID_LENGTH"
+        '413':
+          description: Payload too large
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "PAYLOAD_TOO_LARGE"
+                message: "Photo files exceed maximum size limit of 10MB per image"
+        '415':
+          description: Unsupported media type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "UNSUPPORTED_MEDIA_TYPE"
+                message: "Only JPEG and PNG image formats are supported"
+        '429':
+          description: Too many requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "RATE_LIMIT_EXCEEDED"
+                message: "Too many valuation requests. Please try again in 5 minutes"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: "INTERNAL_ERROR"
+                message: "An unexpected error occurred while processing your request"
+
+components:
+  schemas:
+    ValuationResponse:
+      type: object
+      required:
+        - success
+        - valuationId
+        - estimatedValue
+        - loanAmount
+        - confidence
+        - item
+        - photos
+        - metadata
+      properties:
+        success:
+          type: boolean
+          description: Indicates if the valuation was successful
+          example: true
+        valuationId:
+          type: string
+          description: Unique identifier for this valuation
+          example: "val_1234567890"
+          pattern: '^val_[0-9a-zA-Z]{10,}$'
+        estimatedValue:
+          type: number
+          format: float
+          description: Estimated market value of the item in USD
+          example: 450.00
+          minimum: 0
+        loanAmount:
+          type: number
+          format: float
+          description: Maximum loan amount offered (typically 70% of estimated value)
+          example: 315.00
+          minimum: 0
+        confidence:
+          type: number
+          format: float
+          description: Confidence score of the valuation (0.0 to 1.0)
+          example: 0.92
+          minimum: 0
+          maximum: 1
+        item:
+          $ref: '#/components/schemas/ItemDetails'
+        photos:
+          type: array
+          items:
+            $ref: '#/components/schemas/PhotoAnalysis'
+          description: Analysis results for each uploaded photo
+        metadata:
+          $ref: '#/components/schemas/ValuationMetadata'
+    
+    ItemDetails:
+      type: object
+      required:
+        - title
+        - category
+        - condition
+      properties:
+        title:
+          type: string
+          description: Processed/cleaned item title
+          example: "iPhone 13 Pro"
+        category:
+          type: string
+          description: AI-determined item category
+          example: "Electronics"
+          enum: ["Electronics", "Jewelry", "Watches", "Vehicles", "Collectibles", "Art", "Other"]
+        brand:
+          type: string
+          description: Detected brand name
+          example: "Apple"
+        model:
+          type: string
+          description: Detected model/variant
+          example: "iPhone 13 Pro 128GB"
+        condition:
+          type: string
+          description: AI-assessed condition
+          example: "Excellent"
+          enum: ["Excellent", "Very Good", "Good", "Fair", "Poor"]
+    
+    PhotoAnalysis:
+      type: object
+      required:
+        - photoId
+        - url
+        - analysis
+      properties:
+        photoId:
+          type: string
+          description: Unique identifier for the photo
+          example: "photo_001"
+        url:
+          type: string
+          format: uri
+          description: URL to the processed/stored photo
+          example: "https://storage.celebralvalley.com/valuations/val_1234567890/photo_001.jpg"
+        analysis:
+          type: object
+          required:
+            - features
+            - scores
+          properties:
+            features:
+              type: array
+              items:
+                type: string
+              description: Detected features in the photo
+              example: ["screen_condition", "body_condition", "accessories"]
+            scores:
+              type: object
+              description: Quality/condition scores for different aspects
+              example:
+                overall: 0.95
+                screen: 0.98
+                body: 0.92
+              additionalProperties:
+                type: number
+                format: float
+                minimum: 0
+                maximum: 1
+    
+    ValuationMetadata:
+      type: object
+      required:
+        - processedAt
+        - processingTimeMs
+        - aiModel
+      properties:
+        processedAt:
+          type: string
+          format: date-time
+          description: When the valuation was completed
+          example: "2025-01-23T10:30:15.123Z"
+        processingTimeMs:
+          type: integer
+          description: Time taken to process the valuation in milliseconds
+          example: 2340
+          minimum: 0
+        aiModel:
+          type: string
+          description: Version of the AI model used for valuation
+          example: "valuation-v2.1"
+    
+    ErrorResponse:
+      type: object
+      required:
+        - success
+        - error
+        - message
+      properties:
+        success:
+          type: boolean
+          description: Always false for error responses
+          example: false
+        error:
+          type: string
+          description: Error code
+          example: "VALIDATION_ERROR"
+          enum: 
+            - "VALIDATION_ERROR"
+            - "PAYLOAD_TOO_LARGE" 
+            - "UNSUPPORTED_MEDIA_TYPE"
+            - "RATE_LIMIT_EXCEEDED"
+            - "INTERNAL_ERROR"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "At least 1 photo is required"
+        details:
+          type: object
+          description: Additional error details (optional)
+          properties:
+            field:
+              type: string
+              description: Field that caused the validation error
+            code:
+              type: string
+              description: Specific validation error code
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication
+
+security:
+  - ApiKeyAuth: []
+
+tags:
+  - name: Valuation
+    description: Item valuation operations

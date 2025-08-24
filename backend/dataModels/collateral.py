@@ -29,6 +29,14 @@ class CollateralCreateSimple(BaseModel):
     user_id: str = Field(..., title="User ID", description="ID of the user who owns this collateral")
 
 
+class CollateralCreateRequest(BaseModel):
+    """Request model for creating a new collateral with basic info"""
+    user_id: str = Field(..., title="User ID", description="ID of the user who owns this collateral")
+    name: str = Field(..., title="Name", description="Name of the collateral", min_length=1, max_length=200)
+    description: str = Field(..., title="Description", description="Description of the collateral", min_length=1, max_length=1000)
+    images: Optional[List[str]] = Field([], title="Images", description="List of image URLs/paths for the collateral")
+
+
 class CollateralCreate(CollateralBase):
     """Model for creating a new collateral with full data"""
     pass

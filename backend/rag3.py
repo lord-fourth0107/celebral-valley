@@ -133,7 +133,7 @@ class ImageRAGSystem:
     
     def generate_structured_description(self, image: Image.Image, 
                                      custom_prompt: str = None,
-                                     max_tokens: int = 500) -> Dict:
+                                     max_tokens: int = 600) -> Dict:
         """
         Generate structured image description using Claude API
         
@@ -150,6 +150,7 @@ class ImageRAGSystem:
                 "name": "Description unavailable",
                 "type": "Unknown",
                 "categories": [],
+                "user_description": "Anthropic API key not provided",
                 "detailed_description": "Anthropic API key not provided"
             }
         
@@ -157,24 +158,23 @@ class ImageRAGSystem:
             # Convert image to base64
             image_b64 = self.image_to_base64(image)
             
-            # Structured prompt for JSON-like output
+            # Improved structured prompt for better parsing
             if custom_prompt is None:
-                custom_prompt = """Analyze this image and provide a structured description in the following format:
+                custom_prompt = """Analyze this image and provide a structured description. Please format your response with EXACTLY these labels and structure:
 
-                Name: A descriptive, catchy name for the main object/product
-                Type: The primary category (e.g., watch, car, furniture, clothing)
-                Model Number: If visible, provide the model number, serial number, or product code
-                Categories: List of relevant categories like [luxury, collection, daily, vintage, modern, sport, casual, formal, premium, affordable, etc.]
-                User Description: Write ONE sentence describing what this product is and approximately how old it is. Be specific about the product type and era. Examples: "A vintage Swiss mechanical watch from the 1960s", "A modern iPhone 15 smartphone from 2023", "A classic leather sneaker from the 1980s", "A contemporary wireless headphone with modern design"
-                Detailed Description: A comprehensive description including:
-                - Main objects and their characteristics
-                - Colors, materials, and visual features
-                - Style, brand, or design elements
-                - Context or setting
-                - Any unique or notable features
+NAME: [A short, descriptive name for the main object/product]
 
-                IMPORTANT: Always provide Name, Type, User Description, and at least 2-3 categories. If Model Number is not visible, write "Not visible".
-                Format your response with clear labels and values."""
+TYPE: [The primary category like watch, phone, bag, car, furniture, etc.]
+
+MODEL_NUMBER: [If visible, provide model number/serial number, otherwise write "Not visible"]
+
+USER_DESCRIPTION: [Write exactly ONE sentence that sounds like a user describing their item, including approximate age/era. Examples: "This is my vintage Casio watch from the 1990s", "This is a modern iPhone 15 from 2023", "This is my leather bag that's about 2 years old", "This is a classic car from the 1960s"]
+
+CATEGORIES: [List 3-4 relevant categories separated by commas, like: vintage, luxury, daily-use, electronics]
+
+DETAILED_DESCRIPTION: [Write a comprehensive description including colors, materials, condition, brand elements, and unique features]
+
+Please follow this exact format with these exact labels. Make the USER_DESCRIPTION sound natural and personal, as if the owner is describing it."""
             
             # Make API call to Claude with retry logic
             max_retries = 3
@@ -218,6 +218,7 @@ class ImageRAGSystem:
                         raise e
             
             response_text = message.content[0].text.strip()
+            print(f"Claude Response:\n{response_text}\n")  # Debug print
             
             # Parse the response to extract structured information
             structured_data = self._parse_claude_response(response_text)
@@ -233,6 +234,7 @@ class ImageRAGSystem:
                 "name": "Description generation failed",
                 "type": "Unknown",
                 "categories": [],
+                "user_description": f"Error generating description: {str(e)}",
                 "detailed_description": f"Error: {str(e)}",
                 "base64_image": self.image_to_base64(image) if 'image' in locals() else ""
             }
@@ -251,139 +253,100 @@ class ImageRAGSystem:
             # Initialize default values
             structured_data = {
                 "name": "Unknown",
-                "type": "Unknown",
+                "type": "Unknown", 
                 "model_number": "Not visible",
-                "user_description": "Unknown product",
+                "user_description": "Unknown item",
                 "categories": [],
                 "detailed_description": response_text
             }
             
-            # Try to extract structured information from the response
+            # Split response into lines for processing
             lines = response_text.split('\n')
             current_field = None
+            detailed_description_lines = []
             
             for line in lines:
                 line = line.strip()
                 if not line:
                     continue
                 
-                # Check for field indicators with more flexible matching
-                line_lower = line.lower()
+                line_upper = line.upper()
                 
-                if 'name:' in line_lower:
+                # Check for field indicators with exact matching
+                if line_upper.startswith('NAME:'):
                     structured_data["name"] = line.split(':', 1)[1].strip()
-                elif 'type:' in line_lower:
+                    current_field = None
+                    
+                elif line_upper.startswith('TYPE:'):
                     structured_data["type"] = line.split(':', 1)[1].strip()
-                elif 'model number:' in line_lower or 'model:' in line_lower:
+                    current_field = None
+                    
+                elif line_upper.startswith('MODEL_NUMBER:') or line_upper.startswith('MODEL NUMBER:'):
                     structured_data["model_number"] = line.split(':', 1)[1].strip()
-                elif 'user description:' in line_lower:
+                    current_field = None
+                    
+                elif line_upper.startswith('USER_DESCRIPTION:') or line_upper.startswith('USER DESCRIPTION:'):
                     structured_data["user_description"] = line.split(':', 1)[1].strip()
-                elif 'categories:' in line_lower:
+                    current_field = None
+                    
+                elif line_upper.startswith('CATEGORIES:'):
                     categories_text = line.split(':', 1)[1].strip()
-                    # Try to parse categories (remove brackets, split by comma)
+                    # Parse categories (remove brackets if present, split by comma)
                     categories_text = categories_text.strip('[]')
                     if categories_text:
-                        # Split by comma and clean up each category
                         categories = [cat.strip().strip('"').strip("'") for cat in categories_text.split(',') if cat.strip()]
                         structured_data["categories"] = [cat for cat in categories if cat and cat.lower() not in ['unknown', 'not visible']]
-                elif 'detailed description:' in line_lower:
+                    current_field = None
+                    
+                elif line_upper.startswith('DETAILED_DESCRIPTION:') or line_upper.startswith('DETAILED DESCRIPTION:'):
+                    detailed_desc_start = line.split(':', 1)[1].strip()
+                    if detailed_desc_start:
+                        detailed_description_lines = [detailed_desc_start]
                     current_field = "detailed_description"
-                    structured_data["detailed_description"] = line.split(':', 1)[1].strip()
+                    
                 elif current_field == "detailed_description":
                     # Continue building detailed description
-                    structured_data["detailed_description"] += " " + line
+                    detailed_description_lines.append(line)
             
-            # Fallback logic for better parsing
-            if structured_data["name"] == "Unknown":
-                # Try to extract name from the first meaningful line
+            # Join detailed description lines
+            if detailed_description_lines:
+                structured_data["detailed_description"] = " ".join(detailed_description_lines)
+            
+            # Clean up the fields
+            structured_data["name"] = structured_data["name"].strip('[]"\'')
+            structured_data["type"] = structured_data["type"].strip('[]"\'')
+            structured_data["model_number"] = structured_data["model_number"].strip('[]"\'')
+            structured_data["user_description"] = structured_data["user_description"].strip('[]"\'')
+            
+            # Fallback processing if fields are still empty
+            if structured_data["name"] == "Unknown" or not structured_data["name"]:
+                # Try to extract from the first meaningful content
                 for line in lines:
                     line = line.strip()
-                    if line and not line.lower().startswith(('name:', 'type:', 'categories:', 'model', 'detailed')):
+                    if line and not any(field in line.upper() for field in ['NAME:', 'TYPE:', 'MODEL:', 'USER:', 'CATEGORIES:', 'DETAILED:']):
                         structured_data["name"] = line[:50]  # Take first 50 chars as name
                         break
             
-            if structured_data["type"] == "Unknown":
-                # Try to infer type from the name or description
-                name_lower = structured_data["name"].lower()
-                if any(word in name_lower for word in ['watch', 'timepiece', 'clock']):
-                    structured_data["type"] = "watch"
-                elif any(word in name_lower for word in ['car', 'vehicle', 'automobile']):
-                    structured_data["type"] = "car"
-                elif any(word in name_lower for word in ['furniture', 'chair', 'table', 'sofa']):
-                    structured_data["type"] = "furniture"
-                elif any(word in name_lower for word in ['clothing', 'shirt', 'dress', 'jacket']):
-                    structured_data["type"] = "clothing"
-                else:
-                    structured_data["type"] = "product"
-            
-            # Ensure we have at least some categories
+            # Ensure we have basic categories if none were found
             if not structured_data["categories"]:
-                # Generate basic categories based on type
                 type_lower = structured_data["type"].lower()
-                if type_lower == "watch":
+                if any(word in type_lower for word in ["watch", "timepiece"]):
                     structured_data["categories"] = ["accessory", "timepiece", "fashion"]
-                elif type_lower == "car":
+                elif any(word in type_lower for word in ["phone", "smartphone"]):
+                    structured_data["categories"] = ["electronics", "mobile", "technology"]
+                elif any(word in type_lower for word in ["bag", "purse", "backpack"]):
+                    structured_data["categories"] = ["accessory", "fashion", "storage"]
+                elif any(word in type_lower for word in ["car", "vehicle"]):
                     structured_data["categories"] = ["vehicle", "transportation", "automotive"]
-                elif type_lower == "furniture":
-                    structured_data["categories"] = ["home", "interior", "decor"]
-                elif type_lower == "clothing":
-                    structured_data["categories"] = ["fashion", "apparel", "style"]
                 else:
                     structured_data["categories"] = ["product", "item", "object"]
             
-            # Generate user_description if not found
-            if structured_data["user_description"] == "Unknown product":
-                type_lower = structured_data["type"].lower()
-                name_lower = structured_data["name"].lower()
-                
-                # Create a simple user description based on type and name
-                if type_lower == "watch":
-                    if any(word in name_lower for word in ["vintage", "classic", "antique"]):
-                        structured_data["user_description"] = f"A vintage {type_lower} with classic design"
-                    else:
-                        structured_data["user_description"] = f"A modern {type_lower} with contemporary styling"
-                elif type_lower == "car":
-                    if any(word in name_lower for word in ["vintage", "classic", "antique"]):
-                        structured_data["user_description"] = f"A classic {type_lower} from a bygone era"
-                    else:
-                        structured_data["user_description"] = f"A modern {type_lower} with current technology"
-                elif type_lower == "furniture":
-                    if any(word in name_lower for word in ["vintage", "classic", "antique"]):
-                        structured_data["user_description"] = f"A vintage {type_lower} piece with timeless design"
-                    else:
-                        structured_data["user_description"] = f"A modern {type_lower} item with contemporary style"
-                elif type_lower == "clothing":
-                    if any(word in name_lower for word in ["vintage", "classic", "antique"]):
-                        structured_data["user_description"] = f"A vintage {type_lower} item with classic appeal"
-                    else:
-                        structured_data["user_description"] = f"A modern {type_lower} piece with current fashion"
-                elif type_lower == "phone" or type_lower == "smartphone":
-                    if any(word in name_lower for word in ["vintage", "classic", "old"]):
-                        structured_data["user_description"] = f"An older {type_lower} model from previous years"
-                    else:
-                        structured_data["user_description"] = f"A current {type_lower} model with modern features"
-                elif type_lower == "headphone" or type_lower == "earphone":
-                    if any(word in name_lower for word in ["vintage", "classic", "old"]):
-                        structured_data["user_description"] = f"Classic {type_lower}s with traditional design"
-                    else:
-                        structured_data["user_description"] = f"Modern {type_lower}s with current technology"
-                elif type_lower == "shoe" or type_lower == "sneaker":
-                    if any(word in name_lower for word in ["vintage", "classic", "retro"]):
-                        structured_data["user_description"] = f"Vintage {type_lower}s with retro styling"
-                    else:
-                        structured_data["user_description"] = f"Contemporary {type_lower}s with modern design"
-                else:
-                    # For unknown types, try to create a better description from the name
-                    if any(word in name_lower for word in ["vintage", "classic", "antique", "old", "retro"]):
-                        structured_data["user_description"] = f"A vintage {type_lower} with classic characteristics"
-                    elif any(word in name_lower for word in ["modern", "new", "contemporary", "current"]):
-                        structured_data["user_description"] = f"A modern {type_lower} with current features"
-                    else:
-                        # Use the actual name if it's descriptive
-                        if len(structured_data["name"]) > 10 and structured_data["name"] != "Unknown":
-                            structured_data["user_description"] = f"{structured_data['name']} - a {type_lower} with distinctive features"
-                        else:
-                            structured_data["user_description"] = f"A {type_lower} with unique characteristics"
+            # Ensure user_description is not the fallback programmatic one
+            if structured_data["user_description"] in ["Unknown item", "Unknown product"] or not structured_data["user_description"]:
+                # If Claude didn't provide a good user description, create a generic one
+                structured_data["user_description"] = f"This is a {structured_data['type'].lower()} with distinctive characteristics"
+            
+            print(f"Parsed structured data: {structured_data}")  # Debug print
             
             return structured_data
             
@@ -392,7 +355,7 @@ class ImageRAGSystem:
             return {
                 "name": "Parse error",
                 "type": "Unknown",
-                "model_number": "Not visible",
+                "model_number": "Not visible", 
                 "user_description": "Error parsing product description",
                 "categories": ["error", "unknown"],
                 "detailed_description": response_text
@@ -475,6 +438,7 @@ class ImageRAGSystem:
                     custom_prompt=custom_description_prompt
                 )
                 print(f"Generated structured description: {structured_description['name']} - {structured_description['type']}")
+                print(f"User description: {structured_description['user_description']}")
             
             # Update metadata with structured description and other info
             metadata.update({
@@ -557,6 +521,7 @@ class ImageRAGSystem:
                         custom_prompt=custom_description_prompt
                     )
                     print(f"Structured description generated: {structured_description['name']} - {structured_description['type']}")
+                    print(f"User description: {structured_description['user_description']}")
                 
                 # Update metadata
                 metadata.update({
@@ -817,7 +782,38 @@ class ImageRAGSystem:
             print(f"Error displaying images: {e}")
 
 
-# Example usage with Claude descriptions
+# Test function to verify the fix
+def test_user_description():
+    """Test function to verify that user_description is properly generated by Claude"""
+    
+    # Initialize the system
+    rag_system = ImageRAGSystem()
+    
+    # Test with a single image
+    test_image_path = "/Users/yashavikasingh/Documents/casio2.png"  # Update with your test image
+    
+    try:
+        print("=== Testing User Description Generation ===")
+        
+        # Load image and generate description
+        image = rag_system.load_image(test_image_path)
+        structured_desc = rag_system.generate_structured_description(image)
+        
+        print(f"Name: {structured_desc['name']}")
+        print(f"Type: {structured_desc['type']}")
+        print(f"Model Number: {structured_desc['model_number']}")
+        print(f"User Description: {structured_desc['user_description']}")
+        print(f"Categories: {structured_desc['categories']}")
+        print(f"Detailed Description: {structured_desc['detailed_description'][:100]}...")
+        
+        return structured_desc
+        
+    except Exception as e:
+        print(f"Error testing user description: {e}")
+        return None
+
+
+# Example usage with improved user descriptions
 def simple_example():
     """Simple example of using find_similar_images to get metadata list"""
     
@@ -832,20 +828,19 @@ def simple_example():
         
         # Find similar images - this returns the metadata list directly
         similar_images_metadata = rag_system.find_similar_images(query_image_path, top_k=3)
-        print(similar_images_metadata)
-        # print(f"Found {len(similar_images_metadata)} similar images")
+        print(f"Found {len(similar_images_metadata)} similar images")
         
-        # # Print the metadata for each image
-        # for i, img in enumerate(similar_images_metadata):
-        #     print(f"\n--- Image {i+1} ---")
-        #     print(f"Name: {img['name']}")
-        #     print(f"Type: {img['type']}")
-        #     print(f"Model Number: {img['model_number']}")
-        #     print(f"User Description: {img['user_description']}")
-        #     print(f"Categories: {img['categories']}")
-        #     print(f"Score: {img['score']:.3f}")
-        #     print(f"Image Path: {img['image_path']}")
-        #     print(f"Base64 Length: {len(img['base64_image'])} characters")
+        # Print the metadata for each image
+        for i, img in enumerate(similar_images_metadata):
+            print(f"\n--- Image {i+1} ---")
+            print(f"Name: {img['name']}")
+            print(f"Type: {img['type']}")
+            print(f"Model Number: {img['model_number']}")
+            print(f"User Description: {img['user_description']}")
+            print(f"Categories: {img['categories']}")
+            print(f"Score: {img['score']:.3f}")
+            print(f"Image Path: {img['image_path']}")
+            print(f"Base64 Length: {len(img['base64_image'])} characters")
         
         # Return the metadata list for further use
         return similar_images_metadata
@@ -993,38 +988,263 @@ def example_folder_insertion():
     print("=== Folder Insertion Example ===")
     print(f"Inserting all images from: {folder_path}")
     
-    # Insert all images from folder
+    # Insert all images from folder with improved prompt for better user descriptions
     insert_folder_to_qdrant(
         folder_path=folder_path,
         source_platform="local_collection",
         generate_descriptions=True,
-        custom_description_prompt="Describe this image focusing on the main objects, colors, and visual characteristics for search purposes."
+        custom_description_prompt=None  # Use the improved default prompt
     )
 
 
-def example_get_structured_descriptions():
-    """Example of getting structured descriptions in a variable"""
+def integrate_rag3_with_llampi(input_image_path: str, 
+                              user_description: str = "",
+                              top_k: int = 3,
+                              score_threshold: float = 0.0) -> Dict:
+    """
+    Integrate rag3 with llampi to process images through RAG system and calculate prices
     
-    # Initialize the system
-    rag_system = ImageRAGSystem()
+    Args:
+        input_image_path: Path to the input image
+        user_description: User's description of the input image
+        top_k: Number of similar images to find
+        score_threshold: Minimum similarity score threshold
+        
+    Returns:
+        Dictionary containing:
+        - input_image_analysis: Analysis and price for input image
+        - similar_images_analysis: List of similar images with prices
+        - summary: Summary of all findings
+    """
+    try:
+        print("=" * 80)
+        print("🔄 INTEGRATING RAG3 WITH LLAMPI")
+        print("=" * 80)
+        
+        # Step 1: Initialize RAG3 system
+        print("\n📊 Step 1: Initializing RAG3 system...")
+        rag_system = ImageRAGSystem()
+        
+        # Step 2: Find similar images using RAG3
+        print(f"\n🔍 Step 2: Finding {top_k} similar images...")
+        similar_images = rag_system.find_similar_images(
+            input_image_path, 
+            top_k=top_k, 
+            score_threshold=score_threshold
+        )
+        
+        print(f"✅ Found {len(similar_images)} similar images")
+        
+        # Step 3: Initialize LLM API client
+        print("\n🤖 Step 3: Initializing LLM API client...")
+        try:
+            from llmapi import AnthropicClient
+            llm_client = AnthropicClient()
+            print("✅ LLM API client initialized successfully")
+        except ImportError as e:
+            print(f"❌ Error importing llmapi: {e}")
+            return {"error": f"Could not import llmapi: {e}"}
+        except Exception as e:
+            print(f"❌ Error initializing LLM API client: {e}")
+            return {"error": f"Could not initialize LLM API client: {e}"}
+        
+        # Step 4: Analyze input image and get price
+        print(f"\n💰 Step 4: Analyzing input image and calculating price...")
+        print(f"Input image: {input_image_path}")
+        print(f"User description: {user_description}")
+        
+        try:
+            input_image_price = llm_client.search_product_price_from_image(
+                input_image_path, 
+                additional_context=user_description
+            )
+            print(f"✅ Input image price calculated: {input_image_price.price_range}")
+        except Exception as e:
+            print(f"❌ Error calculating input image price: {e}")
+            input_image_price = None
+        
+        # Step 5: Analyze similar images and get prices
+        print(f"\n🔍 Step 5: Analyzing {len(similar_images)} similar images and calculating prices...")
+        similar_images_analysis = []
+        
+        for i, similar_img in enumerate(similar_images):
+            print(f"\n--- Processing Similar Image {i+1}/{len(similar_images)} ---")
+            print(f"Name: {similar_img['name']}")
+            print(f"Type: {similar_img['type']}")
+            print(f"User Description: {similar_img['user_description']}")
+            print(f"Similarity Score: {similar_img['score']:.3f}")
+            
+            try:
+                # Get price for similar image using its description
+                similar_img_price = llm_client.get_price_range_from_description(
+                    similar_img['detailed_description'],
+                    search_context=f"Similar to {similar_img['name']}, {similar_img['user_description']}"
+                )
+                
+                # Combine RAG3 data with price data
+                combined_analysis = {
+                    'rag3_data': similar_img,
+                    'price_data': similar_img_price,
+                    'combined_info': {
+                        'name': similar_img['name'],
+                        'type': similar_img['type'],
+                        'user_description': similar_img['user_description'],
+                        'detailed_description': similar_img['detailed_description'],
+                        'similarity_score': similar_img['score'],
+                        'price_range': similar_img_price.price_range,
+                        'currency': similar_img_price.currency,
+                        'marketplace': similar_img_price.marketplace,
+                        'confidence': similar_img_price.confidence,
+                        'additional_info': similar_img_price.additional_info
+                    }
+                }
+                
+                similar_images_analysis.append(combined_analysis)
+                print(f"✅ Price calculated: {similar_img_price.price_range}")
+                
+            except Exception as e:
+                print(f"❌ Error calculating price for similar image {i+1}: {e}")
+                # Add image without price data
+                combined_analysis = {
+                    'rag3_data': similar_img,
+                    'price_data': None,
+                    'combined_info': {
+                        'name': similar_img['name'],
+                        'type': similar_img['type'],
+                        'user_description': similar_img['user_description'],
+                        'detailed_description': similar_img['detailed_description'],
+                        'similarity_score': similar_img['score'],
+                        'price_range': 'Price calculation failed',
+                        'currency': 'Unknown',
+                        'marketplace': 'Unknown',
+                        'confidence': 'low',
+                        'additional_info': f'Error: {str(e)}'
+                    }
+                }
+                similar_images_analysis.append(combined_analysis)
+        
+        # Step 6: Prepare results
+        print(f"\n📋 Step 6: Preparing final results...")
+        
+        # Input image analysis
+        input_image_analysis = {
+            'image_path': input_image_path,
+            'user_description': user_description,
+            'price_data': input_image_price,
+            'analysis_summary': {
+                'name': input_image_price.product_name if input_image_price else 'Unknown',
+                'price_range': input_image_price.price_range if input_image_price else 'Price calculation failed',
+                'currency': input_image_price.currency if input_image_price else 'Unknown',
+                'marketplace': input_image_price.marketplace if input_image_price else 'Unknown',
+                'confidence': input_image_price.confidence if input_image_price else 'low'
+            }
+        }
+        
+        # Summary statistics
+        total_images = len(similar_images_analysis) + 1  # +1 for input image
+        successful_price_calculations = sum(1 for img in similar_images_analysis if img['price_data'] is not None)
+        if input_image_price:
+            successful_price_calculations += 1
+        
+        summary = {
+            'total_images_processed': total_images,
+            'successful_price_calculations': successful_price_calculations,
+            'failed_price_calculations': total_images - successful_price_calculations,
+            'success_rate': f"{(successful_price_calculations/total_images)*100:.1f}%",
+            'input_image_found': input_image_price is not None,
+            'similar_images_found': len(similar_images_analysis)
+        }
+        
+        # Final results
+        results = {
+            'input_image_analysis': input_image_analysis,
+            'similar_images_analysis': similar_images_analysis,
+            'summary': summary
+        }
+        
+        # Step 7: Print comprehensive results
+        print(f"\n{'='*80}")
+        print("📊 FINAL RESULTS SUMMARY")
+        print(f"{'='*80}")
+        
+        print(f"\n🎯 INPUT IMAGE ANALYSIS:")
+        print(f"   Image: {input_image_path}")
+        print(f"   User Description: {user_description}")
+        if input_image_price:
+            print(f"   Product Name: {input_image_price.product_name}")
+            print(f"   Price Range: {input_image_price.price_range}")
+            print(f"   Currency: {input_image_price.currency}")
+            print(f"   Marketplace: {input_image_price.marketplace}")
+            print(f"   Confidence: {input_image_price.confidence}")
+        else:
+            print(f"   ❌ Price calculation failed")
+        
+        print(f"\n🔍 SIMILAR IMAGES ANALYSIS ({len(similar_images_analysis)} images):")
+        for i, img_analysis in enumerate(similar_images_analysis):
+            print(f"\n   --- Similar Image {i+1} ---")
+            print(f"   Name: {img_analysis['combined_info']['name']}")
+            print(f"   Type: {img_analysis['combined_info']['type']}")
+            print(f"   User Description: {img_analysis['combined_info']['user_description']}")
+            print(f"   Similarity Score: {img_analysis['combined_info']['similarity_score']:.3f}")
+            print(f"   Price Range: {img_analysis['combined_info']['price_range']}")
+            print(f"   Currency: {img_analysis['combined_info']['currency']}")
+            print(f"   Marketplace: {img_analysis['combined_info']['marketplace']}")
+            print(f"   Confidence: {img_analysis['combined_info']['confidence']}")
+        
+        print(f"\n📈 SUMMARY STATISTICS:")
+        print(f"   Total Images Processed: {summary['total_images_processed']}")
+        print(f"   Successful Price Calculations: {summary['successful_price_calculations']}")
+        print(f"   Failed Price Calculations: {summary['failed_price_calculations']}")
+        print(f"   Success Rate: {summary['success_rate']}")
+        print(f"   Input Image Analysis: {'✅ Success' if summary['input_image_found'] else '❌ Failed'}")
+        print(f"   Similar Images Found: {summary['similar_images_found']}")
+        
+        print(f"\n{'='*80}")
+        print("✅ INTEGRATION COMPLETED SUCCESSFULLY")
+        print(f"{'='*80}")
+        
+        return results
+        
+    except Exception as e:
+        error_msg = f"Error in rag3-llampi integration: {str(e)}"
+        print(f"\n❌ {error_msg}")
+        return {"error": error_msg}
+
+
+def example_integration():
+    """Example usage of the rag3-llampi integration function"""
     
-    # Example query image
-    query_image_path = "/Users/yashavikasingh/Documents/casio2.png"
+    # Example input image path - change this to your actual image
+    input_image_path = "/Users/yashavikasingh/Desktop/hackathon/celebral-valley/backend/rolex.jpeg"
+    
+    # Example user description
+    user_description = "This is my vintage Rolex watch from the 1980s, it's in excellent condition"
+    
+    print("=== RAG3-LLAMPI Integration Example ===")
+    print(f"Input Image: {input_image_path}")
+    print(f"User Description: {user_description}")
     
     try:
-        print("=== Getting Structured Descriptions Example ===")
+        # Run the integration
+        results = integrate_rag3_with_llampi(
+            input_image_path=input_image_path,
+            user_description=user_description,
+            top_k=3,
+            score_threshold=0.0
+        )
         
-        # Get structured descriptions list in a variable
-        structured_descriptions = rag_system.get_structured_descriptions_list(query_image_path)
-        
-        print(f"Found {len(structured_descriptions)} similar images")
-        
-        print(structured_descriptions)
-    finally:
-        print("=== Getting Structured Descriptions Example Completed ===")
+        if "error" not in results:
+            print("\n🎉 Integration completed successfully!")
+            print(f"Results returned: {len(results)} main sections")
+        else:
+            print(f"\n❌ Integration failed: {results['error']}")
+            
+    except Exception as e:
+        print(f"\n❌ Example failed: {e}")
 
 
 if __name__ == "__main__":
     # Run examples
-    example_folder_insertion()  # Uncomment to insert a folder of images
+    # example_folder_insertion()  # Uncomment to insert a folder of images
     # simple_example()  # Simple example using find_similar_images
+    example_integration()  # Run the integration example

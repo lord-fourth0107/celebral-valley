@@ -3,7 +3,7 @@ from typing import List, Optional
 
 from dataModels.collateral import (
     Collateral, CollateralCreate, CollateralCreateSimple, CollateralUpdate, CollateralResponse, 
-    CollateralListResponse, CollateralSearchParams, CollateralStatus, CollateralApproveRequest
+    CollateralListResponse, CollateralSearchParams, CollateralStatus, CollateralApproveRequest, CollateralCreateRequest
 )
 from db.collateral import CollateralDB
 from db.user import UserDB
@@ -12,33 +12,41 @@ router = APIRouter(prefix="/collaterals", tags=["collaterals"])
 
 
 @router.post("/", response_model=CollateralResponse, status_code=201)
-async def create_collateral_simple(collateral_data: CollateralCreateSimple):
-    """Create a new collateral with mocked data - only requires user_id"""
+async def create_collateral(collateral_data: CollateralCreateRequest):
+    """Create a new collateral with basic info and mocked data"""
     try:
         # Validate user exists
         user = await UserDB.get_user_by_id(collateral_data.user_id)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         
-        collateral = await CollateralDB.create_collateral_simple(collateral_data)
-        return collateral
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
-
-
-@router.post("/full", response_model=CollateralResponse, status_code=201)
-async def create_collateral_full(collateral_data: CollateralCreate):
-    """Create a new collateral with full data"""
-    try:
-        # Validate user exists
-        user = await UserDB.get_user_by_id(collateral_data.user_id)
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+        # TODO: Process the collateral creation
+        # This would typically involve:
+        # 1. Image analysis and valuation
+        # 2. Risk assessment
+        # 3. Loan limit calculation
+        # 4. Interest rate determination
+        # 5. Due date calculation
         
-        collateral = await CollateralDB.create_collateral(collateral_data)
-        return collateral
+        # For now, mock the rest of the data
+        collateral = await CollateralDB.create_collateral_simple(CollateralCreateSimple(
+            user_id=collateral_data.user_id
+        ))
+        
+        # Update the collateral with the provided data
+        update_data = CollateralUpdate(
+            images=collateral_data.images,
+            metadata={
+                "name": collateral_data.name,
+                "description": collateral_data.description,
+                "original_images": collateral_data.images,
+                "status": "awaiting_processing"
+            }
+        )
+        
+        updated_collateral = await CollateralDB.update_collateral(collateral.id, update_data)
+        return updated_collateral
+        
     except HTTPException:
         raise
     except Exception as e:

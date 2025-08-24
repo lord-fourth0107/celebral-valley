@@ -225,4 +225,4 @@ Yashavika Singh
 
 ---
 
-**Built with ❤️ for the hackathon community** 
+**Built with ❤️ ** 

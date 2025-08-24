@@ -2,7 +2,6 @@ from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
 from enum import Enum
-from decimal import Decimal
 
 
 class TransactionType(str, Enum):
@@ -30,7 +29,7 @@ class TransactionBase(BaseModel):
     account_id: str = Field(..., title="Account ID", description="ID of the account involved")
     user_id: str = Field(..., title="User ID", description="ID of the user making the transaction")
     transaction_type: TransactionType = Field(..., title="Transaction Type", description="Type of transaction")
-    amount: Decimal = Field(..., title="Amount", description="Transaction amount")
+    amount: float = Field(..., title="Amount", description="Transaction amount")
     description: Optional[str] = Field(None, title="Description", description="Transaction description")
     reference_number: Optional[str] = Field(None, title="Reference Number", description="External reference number")
     collateral_id: Optional[str] = Field(None, title="Collateral ID", description="ID of collateral for loan-related transactions")
@@ -39,10 +38,10 @@ class TransactionBase(BaseModel):
 
 class TransactionCreate(TransactionBase):
     """Model for creating a new transaction"""
-    loan_balance_before: Optional[Decimal] = Field(None, title="Loan Balance Before", description="Loan balance before transaction")
-    loan_balance_after: Optional[Decimal] = Field(None, title="Loan Balance After", description="Loan balance after transaction")
-    invested_balance_before: Optional[Decimal] = Field(None, title="Invested Balance Before", description="Invested balance before transaction")
-    invested_balance_after: Optional[Decimal] = Field(None, title="Invested Balance After", description="Invested balance after transaction")
+    loan_balance_before: Optional[float] = Field(None, title="Loan Balance Before", description="Loan balance before transaction")
+    loan_balance_after: Optional[float] = Field(None, title="Loan Balance After", description="Loan balance after transaction")
+    invested_balance_before: Optional[float] = Field(None, title="Invested Balance Before", description="Invested balance before transaction")
+    invested_balance_after: Optional[float] = Field(None, title="Invested Balance After", description="Invested balance after transaction")
 
 
 class TransactionUpdate(BaseModel):
@@ -60,10 +59,10 @@ class Transaction(TransactionBase):
     """Complete transaction model with all fields"""
     id: str = Field(..., title="Transaction ID", description="Unique identifier for the transaction")
     status: TransactionStatus = Field(default=TransactionStatus.PENDING, title="Status", description="Transaction status")
-    loan_balance_before: Optional[Decimal] = Field(None, title="Loan Balance Before", description="Loan balance before transaction")
-    loan_balance_after: Optional[Decimal] = Field(None, title="Loan Balance After", description="Loan balance after transaction")
-    invested_balance_before: Optional[Decimal] = Field(None, title="Invested Balance Before", description="Invested balance before transaction")
-    invested_balance_after: Optional[Decimal] = Field(None, title="Invested Balance After", description="Invested balance after transaction")
+    loan_balance_before: Optional[float] = Field(None, title="Loan Balance Before", description="Loan balance before transaction")
+    loan_balance_after: Optional[float] = Field(None, title="Loan Balance After", description="Loan balance after transaction")
+    invested_balance_before: Optional[float] = Field(None, title="Invested Balance Before", description="Invested balance before transaction")
+    invested_balance_after: Optional[float] = Field(None, title="Invested Balance After", description="Invested balance after transaction")
     created_at: datetime = Field(..., title="Created At", description="Transaction creation timestamp")
     updated_at: datetime = Field(..., title="Updated At", description="Last update timestamp")
     processed_at: Optional[datetime] = Field(None, title="Processed At", description="Transaction processing timestamp")
@@ -103,7 +102,7 @@ class DepositRequest(BaseModel):
     """Request model for deposit transaction"""
     account_id: str = Field(..., title="Account ID", description="ID of the account to deposit to")
     user_id: str = Field(..., title="User ID", description="ID of the user making the deposit")
-    amount: Decimal = Field(..., title="Amount", description="Amount to deposit", gt=0)
+    amount: float = Field(..., title="Amount", description="Amount to deposit", gt=0)
     description: Optional[str] = Field(None, title="Description", description="Deposit description")
     reference_number: Optional[str] = Field(None, title="Reference Number", description="External reference number")
     metadata: Optional[dict] = Field(None, title="Metadata", description="Additional deposit metadata")
@@ -113,7 +112,7 @@ class WithdrawalRequest(BaseModel):
     """Request model for withdrawal transaction"""
     account_id: str = Field(..., title="Account ID", description="ID of the account to withdraw from")
     user_id: str = Field(..., title="User ID", description="ID of the user making the withdrawal")
-    amount: Decimal = Field(..., title="Amount", description="Amount to withdraw", gt=0)
+    amount: float = Field(..., title="Amount", description="Amount to withdraw", gt=0)
     description: Optional[str] = Field(None, title="Description", description="Withdrawal description")
     reference_number: Optional[str] = Field(None, title="Reference Number", description="External reference number")
     metadata: Optional[dict] = Field(None, title="Metadata", description="Additional withdrawal metadata")
@@ -123,7 +122,7 @@ class PaymentRequest(BaseModel):
     """Request model for payment transaction"""
     account_id: str = Field(..., title="Account ID", description="ID of the account making the payment")
     user_id: str = Field(..., title="User ID", description="ID of the user making the payment")
-    amount: Decimal = Field(..., title="Amount", description="Payment amount", gt=0)
+    amount: float = Field(..., title="Amount", description="Payment amount", gt=0)
     collateral_id: Optional[str] = Field(None, title="Collateral ID", description="ID of the collateral being paid for")
     description: Optional[str] = Field(None, title="Description", description="Payment description")
     reference_number: Optional[str] = Field(None, title="Reference Number", description="External reference number")
@@ -136,7 +135,7 @@ class ExtendLoanRequest(BaseModel):
     user_id: str = Field(..., title="User ID", description="ID of the user extending the loan")
     collateral_id: str = Field(..., title="Collateral ID", description="ID of the collateral to extend")
     extension_days: int = Field(..., title="Extension Days", description="Number of days to extend the loan", gt=0)
-    fee: Decimal = Field(..., title="Extension Fee", description="Fee for extending the loan", gt=0)
+    fee: float = Field(..., title="Extension Fee", description="Fee for extending the loan", gt=0)
     description: Optional[str] = Field(None, title="Description", description="Extension description")
     reference_number: Optional[str] = Field(None, title="Reference Number", description="External reference number")
     metadata: Optional[dict] = Field(None, title="Metadata", description="Additional extension metadata")
@@ -147,7 +146,7 @@ class CreateLoanRequest(BaseModel):
     account_id: str = Field(..., title="Account ID", description="ID of the account receiving the loan")
     user_id: str = Field(..., title="User ID", description="ID of the user receiving the loan")
     collateral_id: str = Field(..., title="Collateral ID", description="ID of the collateral to loan against")
-    loan_amount: Decimal = Field(..., title="Loan Amount", description="Amount to loan against the collateral", gt=0)
+    loan_amount: float = Field(..., title="Loan Amount", description="Amount to loan against the collateral", gt=0)
     description: Optional[str] = Field(None, title="Description", description="Loan description")
     reference_number: Optional[str] = Field(None, title="Reference Number", description="External reference number")
     metadata: Optional[dict] = Field(None, title="Metadata", description="Additional loan metadata")

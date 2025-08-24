@@ -39,6 +39,27 @@
                 <p><strong>User ID:</strong> {{ user_id }}</p>
                 <p><strong>Name:</strong> {{ name }}</p>
                 <p><strong>Description:</strong> {{ description }}</p>
+                {% if collateral_id %}
+                <p><strong>Collateral ID:</strong> {{ collateral_id }}</p>
+                {% endif %}
+                {% if loan_limit %}
+                <p><strong>Loan Limit:</strong> ${{ "%.2f"|format(loan_limit) }}</p>
+                {% endif %}
+                {% if estimated_value %}
+                <p><strong>Estimated Value:</strong> ${{ "%.2f"|format(estimated_value) }}</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Error Message -->
+        {% if error %}
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+            <strong>Error!</strong> {{ error }}
+            <div class="mt-2 text-sm">
+                <p><strong>User ID:</strong> {{ user_id }}</p>
+                <p><strong>Name:</strong> {{ name }}</p>
+                <p><strong>Description:</strong> {{ description }}</p>
             </div>
         </div>
         {% endif %}
@@ -71,16 +92,29 @@
                     <!-- Image Upload -->
                     <div>
                         <label for="image" class="block text-sm font-medium text-gray-700">Image Upload</label>
-                        <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                        <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md" id="upload-area">
                             <div class="space-y-1 text-center">
                                 <div class="flex text-sm text-gray-600">
                                     <label for="image" class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
                                         <span>Upload a file</span>
-                                        <input id="image" name="image" type="file" class="sr-only" accept="image/*">
+                                        <input id="image" name="image" type="file" class="sr-only" accept="image/*" onchange="handleFileSelect(this)">
                                     </label>
                                     <p class="pl-1">or drag and drop</p>
                                 </div>
                                 <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                            </div>
+                        </div>
+                        <div id="file-preview" class="mt-2 hidden">
+                            <div class="flex items-center space-x-2 p-2 bg-green-50 rounded">
+                                <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                </svg>
+                                <span id="file-name" class="text-sm text-green-700"></span>
+                                <button type="button" onclick="removeFile()" class="text-red-500 hover:text-red-700">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -129,6 +163,56 @@
     </div>
 
     <script>
+        // File handling functions
+        function handleFileSelect(input) {
+            const file = input.files[0];
+            if (file) {
+                const fileName = file.name;
+                const fileSize = (file.size / 1024 / 1024).toFixed(2); // Convert to MB
+                
+                document.getElementById('file-name').textContent = `${fileName} (${fileSize} MB)`;
+                document.getElementById('file-preview').classList.remove('hidden');
+                
+                // Change upload area style
+                document.getElementById('upload-area').classList.add('border-green-300', 'bg-green-50');
+            }
+        }
+        
+        function removeFile() {
+            document.getElementById('image').value = '';
+            document.getElementById('file-preview').classList.add('hidden');
+            document.getElementById('upload-area').classList.remove('border-green-300', 'bg-green-50');
+        }
+        
+        // Drag and drop functionality
+        const uploadArea = document.getElementById('upload-area');
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('border-blue-300', 'bg-blue-50');
+        });
+        
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('border-blue-300', 'bg-blue-50');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('border-blue-300', 'bg-blue-50');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type.startsWith('image/')) {
+                    document.getElementById('image').files = files;
+                    handleFileSelect(document.getElementById('image'));
+                } else {
+                    alert('Please select an image file.');
+                }
+            }
+        });
+        
         // Test collateral creation
         async function testCollateralCreation() {
             const resultsDiv = document.getElementById('test-results');

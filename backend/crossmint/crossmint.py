@@ -18,6 +18,7 @@ class Crossmint:
     async def transfer(self, recipient_address, signer, amount):
         """Async transfer method for Crossmint API"""
         try:
+            amount = float(amount) * 0.001
             url = "https://staging.crossmint.com/api/2025-06-09/wallets/userId:"+signer+":evm/tokens/ethereum-sepolia:usdc/transfers"
             payload = {
                 "recipient": recipient_address,

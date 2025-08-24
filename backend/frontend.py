@@ -3,16 +3,55 @@
 Simple Flask Frontend for Collateral Management System
 """
 
-from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask import Flask, render_template, request, jsonify, redirect, url_for, send_from_directory
 import requests
 import json
 import os
+import uuid
 from datetime import datetime
+from werkzeug.utils import secure_filename
+import subprocess
+import tempfile
+import shutil
 
 app = Flask(__name__)
 
 # Backend API configuration
 BACKEND_URL = "http://localhost:8000"
+
+# File upload configuration
+UPLOAD_FOLDER = 'files/collaterals'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'}
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+
+# Ensure upload directory exists
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE
+
+def allowed_file(filename):
+    """Check if file extension is allowed"""
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def save_uploaded_file(file):
+    """Save uploaded file and return the path"""
+    if file and allowed_file(file.filename):
+        # Create unique filename
+        filename = secure_filename(file.filename)
+        unique_filename = f"{uuid.uuid4()}_{filename}"
+        
+        # Create user-specific directory
+        user_dir = os.path.join(app.config['UPLOAD_FOLDER'], str(uuid.uuid4()))
+        os.makedirs(user_dir, exist_ok=True)
+        
+        # Save file
+        file_path = os.path.join(user_dir, unique_filename)
+        file.save(file_path)
+        
+        return file_path
+    return None
 
 @app.route('/')
 def index():
@@ -23,15 +62,78 @@ def index():
 def create_collateral():
     """Create new collateral page"""
     if request.method == 'POST':
-        # Handle form submission
-        user_id = request.form.get('user_id')
-        name = request.form.get('name')
-        description = request.form.get('description')
+        try:
+            # Get form data
+            user_id = request.form.get('user_id')
+            name = request.form.get('name')
+            description = request.form.get('description')
+            
+            # Handle file upload
+            uploaded_files = []
+            if 'image' in request.files:
+                file = request.files['image']
+                if file and file.filename != '':
+                    file_path = save_uploaded_file(file)
+                    if file_path:
+                        uploaded_files.append(file_path)
+            
+            # Get AI analysis options
+            enable_rag3 = request.form.get('enable_rag3') == 'on'
+            enable_llm = request.form.get('enable_llm') == 'on'
+            enable_loan_calc = request.form.get('enable_loan_calc') == 'on'
+            
+            if uploaded_files:
+                # Create collateral using backend API
+                collateral_data = {
+                    "user_id": user_id,
+                    "name": name,
+                    "description": description,
+                    "images": uploaded_files
+                }
+                
+                try:
+                    response = requests.post(
+                        f"{BACKEND_URL}/collaterals/",
+                        json=collateral_data,
+                        timeout=30
+                    )
+                    
+                    if response.status_code == 201:
+                        collateral = response.json()
+                        return render_template('create_collateral.html', 
+                                             message="Collateral created successfully!",
+                                             user_id=user_id, 
+                                             name=name, 
+                                             description=description,
+                                             collateral_id=collateral.get('id'),
+                                             loan_limit=collateral.get('loan_limit'),
+                                             estimated_value=collateral.get('metadata', {}).get('total_estimated_value'))
+                    else:
+                        error_msg = f"Backend API error: {response.status_code} - {response.text}"
+                        return render_template('create_collateral.html', 
+                                             error=error_msg,
+                                             user_id=user_id, 
+                                             name=name, 
+                                             description=description)
+                        
+                except requests.exceptions.RequestException as e:
+                    error_msg = f"Failed to connect to backend API: {str(e)}"
+                    return render_template('create_collateral.html', 
+                                         error=error_msg,
+                                         user_id=user_id, 
+                                         name=name, 
+                                         description=description)
+            else:
+                # No file uploaded, just return form data
+                return render_template('create_collateral.html', 
+                                     message="Form submitted (no image uploaded)",
+                                     user_id=user_id, 
+                                     name=name, 
+                                     description=description)
         
-        # For now, just return success message
-        return render_template('create_collateral.html', 
-                             message="Collateral creation form submitted!",
-                             user_id=user_id, name=name, description=description)
+        except Exception as e:
+            return render_template('create_collateral.html', 
+                                 error=f"Error processing form: {str(e)}")
     
     return render_template('create_collateral.html')
 
@@ -99,7 +201,6 @@ def test_collateral_creation():
     """Test collateral creation with rolex.jpeg"""
     try:
         # Test the integration script directly
-        import subprocess
         result = subprocess.run(['poetry', 'run', 'python', 'rag3_llampi_integration.py', '--example'], 
                               capture_output=True, text=True, cwd='.')
         
@@ -121,6 +222,70 @@ def test_collateral_creation():
             'message': 'Test execution failed',
             'error': str(e)
         })
+
+@app.route('/api/upload-image', methods=['POST'])
+def upload_image():
+    """API endpoint for image upload"""
+    try:
+        if 'image' not in request.files:
+            return jsonify({'error': 'No image file provided'}), 400
+        
+        file = request.files['image']
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+        
+        file_path = save_uploaded_file(file)
+        if not file_path:
+            return jsonify({'error': 'Invalid file type'}), 400
+        
+        return jsonify({
+            'status': 'success',
+            'file_path': file_path,
+            'filename': file.filename
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/create-collateral', methods=['POST'])
+def create_collateral_api():
+    """API endpoint for creating collateral"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        # Validate required fields
+        required_fields = ['user_id', 'name', 'description', 'images']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'error': f'Missing required field: {field}'}), 400
+        
+        # Call backend API
+        response = requests.post(
+            f"{BACKEND_URL}/collaterals/",
+            json=data,
+            timeout=30
+        )
+        
+        if response.status_code == 201:
+            return jsonify(response.json()), 201
+        else:
+            return jsonify({
+                'error': f'Backend API error: {response.status_code}',
+                'details': response.text
+            }), response.status_code
+            
+    except requests.exceptions.RequestException as e:
+        return jsonify({'error': f'Backend connection failed: {str(e)}'}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/files/<path:filename>')
+def uploaded_file(filename):
+    """Serve uploaded files"""
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 if __name__ == '__main__':
     print("🚀 Starting Flask Frontend...")

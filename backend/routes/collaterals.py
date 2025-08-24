@@ -179,7 +179,6 @@ async def create_collateral(collateral_data: CollateralCreateRequest):
         # Update with comprehensive analysis results
         update_data = CollateralUpdate(
             images=collateral_data.images,
-            loan_amount=0.0,  # No loan yet, just collateral assessment
             loan_limit=overall_loan_limit,
             interest=interest_rate,
             due_date=due_date,

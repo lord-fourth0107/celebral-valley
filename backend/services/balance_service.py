@@ -4,7 +4,6 @@ Balance calculation service
 This module handles balance calculations and updates for transactions.
 """
 
-from decimal import Decimal
 from typing import Tuple
 
 from dataModels.transaction import TransactionType, TransactionCreate
@@ -19,9 +18,9 @@ class BalanceService:
     async def calculate_balances_for_transaction(
         account_id: str, 
         transaction_type: TransactionType, 
-        amount: Decimal,
+        amount: float,
         user_id: str = None
-    ) -> Tuple[Decimal, Decimal, Decimal, Decimal]:
+    ) -> Tuple[float, float, float, float]:
         """
         Calculate balance before and after for a transaction
         
@@ -44,7 +43,7 @@ class BalanceService:
             # Deposit increases investment balance
             invested_balance_after = invested_balance_before + amount
             if user_id == "organization":
-                loan_balance_after = Decimal('0.00')  # Organization never has loan balance
+                loan_balance_after = 0.0  # Organization never has loan balance
             
         elif transaction_type == TransactionType.WITHDRAWAL:
             # Withdrawal decreases investment balance
@@ -52,7 +51,7 @@ class BalanceService:
                 raise ValueError(f"Insufficient investment balance. Available: {invested_balance_before}, Required: {amount}")
             invested_balance_after = invested_balance_before - amount
             if user_id == "organization":
-                loan_balance_after = Decimal('0.00')  # Organization never has loan balance
+                loan_balance_after = 0.0  # Organization never has loan balance
             
         elif transaction_type == TransactionType.LOAN_DISBURSEMENT:
             # Loan disbursement increases loan balance for users, but organization never gets loan balance
@@ -69,7 +68,7 @@ class BalanceService:
                 if invested_balance_before < amount:
                     raise ValueError(f"Insufficient investment balance. Available: {invested_balance_before}, Required: {amount}")
                 invested_balance_after = invested_balance_before - amount
-                loan_balance_after = Decimal('0.00')  # Organization never has loan balance
+                loan_balance_after = 0.0  # Organization never has loan balance
             else:
                 # User payment decreases loan balance
                 if loan_balance_before < amount:
@@ -84,23 +83,23 @@ class BalanceService:
                 raise ValueError(f"Insufficient investment balance for fee. Available: {invested_balance_before}, Required: {amount}")
             invested_balance_after = invested_balance_before - amount
             if user_id == "organization":
-                loan_balance_after = Decimal('0.00')  # Organization never has loan balance
+                loan_balance_after = 0.0  # Organization never has loan balance
             
         elif transaction_type == TransactionType.INTEREST:
             # Interest increases investment balance
             invested_balance_after = invested_balance_before + amount
             if user_id == "organization":
-                loan_balance_after = Decimal('0.00')  # Organization never has loan balance
+                loan_balance_after = 0.0  # Organization never has loan balance
             
         return loan_balance_before, loan_balance_after, invested_balance_before, invested_balance_after
 
     @staticmethod
-    async def update_account_balances(account_id: str, loan_balance: Decimal, investment_balance: Decimal):
+    async def update_account_balances(account_id: str, loan_balance: float, investment_balance: float):
         """Update account balances"""
         await AccountDB.update_account_balances(
             account_id=account_id,
-            loan_balance=float(loan_balance),
-            investment_balance=float(investment_balance)
+            loan_balance=loan_balance,
+            investment_balance=investment_balance
         )
 
     @staticmethod
@@ -123,10 +122,10 @@ class BalanceService:
         # Update transaction with balance information
         await TransactionDB.update_transaction_balances(
             transaction_id=transaction_id,
-            loan_balance_before=float(loan_balance_before),
-            loan_balance_after=float(loan_balance_after),
-            invested_balance_before=float(invested_balance_before),
-            invested_balance_after=float(invested_balance_after)
+            loan_balance_before=loan_balance_before,
+            loan_balance_after=loan_balance_after,
+            invested_balance_before=invested_balance_before,
+            invested_balance_after=invested_balance_after
         )
         
         # Update account balances
@@ -175,7 +174,7 @@ class BalanceService:
         user_account_id: str,
         user_id: str,
         transaction_type: TransactionType,
-        amount: Decimal,
+        amount: float,
         description: str = None,
         collateral_id: str = None
     ):
@@ -248,8 +247,8 @@ class BalanceService:
         # Revert account balances to the before state
         await BalanceService.update_account_balances(
             account_id=transaction.account_id,
-            loan_balance=Decimal(str(transaction.loan_balance_before)),
-            investment_balance=Decimal(str(transaction.invested_balance_before))
+            loan_balance=transaction.loan_balance_before,
+            investment_balance=transaction.invested_balance_before
         )
         
         # Mark transaction as failed

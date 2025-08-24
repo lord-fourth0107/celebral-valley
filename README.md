@@ -1,6 +1,6 @@
-# Celebral Valley
+# BrokeNoMore
 
-A comprehensive DeFi lending and borrowing platform built for hackathon implementation, featuring AI-powered collateral valuation, blockchain integration, and modern mobile-first user experience.
+A Lending Network with Image and AI/RAG - Based Collateral Valuationn.
 
 ## 🚀 Project Overview
 

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collateral List - Collateral Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="text-xl font-bold text-blue-600">🏦 Collateral Valley</a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-gray-700 hover:text-blue-600">Dashboard</a>
+                    <a href="/collateral/create" class="text-gray-700 hover:text-blue-600">Create Collateral</a>
+                    <a href="/collateral/list" class="text-blue-600 font-medium">View Collaterals</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto py-6 px-4">
+        <!-- Header -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-900">Collateral Management</h2>
+            <p class="text-gray-600">View and manage all collateral assets</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-blue-100 rounded-lg">
+                        <span class="text-2xl">📊</span>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ collaterals|length }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-yellow-100 rounded-lg">
+                        <span class="text-2xl">⏳</span>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Pending</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ collaterals|selectattr('status', 'equalto', 'pending')|list|length }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-green-100 rounded-lg">
+                        <span class="text-2xl">✅</span>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Approved</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ collaterals|selectattr('status', 'equalto', 'approved')|list|length }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-purple-100 rounded-lg">
+                        <span class="text-2xl">💰</span>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Value</p>
+                        <p class="text-2xl font-bold text-gray-900">$4,250</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="mb-6">
+            <a href="/collateral/create" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                📸 Create New Collateral
+            </a>
+        </div>
+
+        <!-- Collateral List -->
+        <div class="bg-white rounded-lg shadow">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">All Collaterals</h3>
+            </div>
+            
+            {% if collaterals %}
+            <div class="divide-y divide-gray-200">
+                {% for collateral in collaterals %}
+                <div class="p-6">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-3">
+                                <h4 class="text-lg font-medium text-gray-900">{{ collateral.name }}</h4>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                    {% if collateral.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                    {% elif collateral.status == 'approved' %}bg-green-100 text-green-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ collateral.status|title }}
+                                </span>
+                            </div>
+                            <div class="mt-2 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+                                <div>
+                                    <span class="font-medium">ID:</span> {{ collateral.id }}
+                                </div>
+                                <div>
+                                    <span class="font-medium">User:</span> {{ collateral.user_id }}
+                                </div>
+                                <div>
+                                    <span class="font-medium">Created:</span> {{ collateral.created_at }}
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                <span class="font-medium text-gray-700">Estimated Value:</span>
+                                <span class="text-green-600 font-semibold">{{ collateral.estimated_value }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="ml-6 flex space-x-2">
+                            {% if collateral.status == 'pending' %}
+                            <a href="/collateral/{{ collateral.id }}/approve" 
+                               class="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600">
+                                ✅ Approve
+                            </a>
+                            {% endif %}
+                            <button class="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600">
+                                👁️ View
+                            </button>
+                            <button class="bg-gray-500 text-white px-3 py-1 rounded text-sm hover:bg-gray-600">
+                                ✏️ Edit
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- AI Analysis Summary -->
+                    <div class="mt-4 bg-gray-50 rounded-lg p-4">
+                        <h5 class="text-sm font-medium text-gray-700 mb-2">🤖 AI Analysis Summary</h5>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                            <div class="bg-blue-50 p-2 rounded">
+                                <span class="font-medium text-blue-800">RAG3:</span>
+                                <span class="text-blue-600">✅ Processed</span>
+                            </div>
+                            <div class="bg-green-50 p-2 rounded">
+                                <span class="font-medium text-green-800">LLM:</span>
+                                <span class="text-green-600">✅ Analyzed</span>
+                            </div>
+                            <div class="bg-purple-50 p-2 rounded">
+                                <span class="font-medium text-purple-800">Risk:</span>
+                                <span class="text-purple-600">Medium</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="p-6 text-center">
+                <div class="text-gray-400 text-6xl mb-4">📸</div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">No collaterals found</h3>
+                <p class="text-gray-600 mb-4">Get started by creating your first collateral asset</p>
+                <a href="/collateral/create" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                    Create First Collateral
+                </a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="mt-6 flex space-x-3">
+            <a href="/" class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700">
+                🏠 Back to Dashboard
+            </a>
+            <button onclick="refreshPage()" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                🔄 Refresh
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function refreshPage() {
+            window.location.reload();
+        }
+    </script>
+</body>
+</html>

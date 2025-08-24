@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Approve Collateral - Collateral Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="text-xl font-bold text-blue-600">🏦 Collateral Valley</a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/" class="text-gray-700 hover:text-blue-600">Dashboard</a>
+                    <a href="/collateral/create" class="text-gray-700 hover:text-blue-600">Create Collateral</a>
+                    <a href="/collateral/list" class="text-gray-700 hover:text-blue-600">View Collaterals</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-4xl mx-auto py-6 px-4">
+        <!-- Header -->
+        <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-900">Approve Collateral</h2>
+            <p class="text-gray-600">Review and approve collateral for loan processing</p>
+        </div>
+
+        <!-- Success Message -->
+        {% if message %}
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
+            <strong>✅ {{ message }}</strong>
+        </div>
+        {% endif %}
+
+        <!-- Collateral Details -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">📋 Collateral Information</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Collateral ID</p>
+                    <p class="text-lg font-semibold text-gray-900">{{ collateral_id }}</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Status</p>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                        Pending Approval
+                    </span>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Asset Type</p>
+                    <p class="text-lg font-semibold text-gray-900">Luxury Rolex Watch</p>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Estimated Value</p>
+                    <p class="text-lg font-semibold text-green-600">$4,000 - $4,500</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Analysis Results -->
+        <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">🤖 AI Analysis Results</h3>
+            <div class="space-y-4">
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <h4 class="font-medium text-blue-900 mb-2">RAG3 Image Analysis</h4>
+                    <p class="text-sm text-blue-800">✅ Image processed successfully with CLIP embeddings</p>
+                    <p class="text-sm text-blue-800">🔍 Similar images searched in vector database</p>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <h4 class="font-medium text-green-900 mb-2">LLM Pricing Analysis</h4>
+                    <p class="text-sm text-green-800">💰 Market value: $4,000 - $4,500</p>
+                    <p class="text-sm text-green-800">📊 Confidence: High</p>
+                    <p class="text-sm text-green-800">🏪 Sources: Chrono24, Bob's Watches, Crown & Caliber</p>
+                </div>
+                <div class="bg-purple-50 p-4 rounded-lg">
+                    <h4 class="font-medium text-purple-900 mb-2">Risk Assessment</h4>
+                    <p class="text-sm text-purple-800">⚠️ Aftermarket diamond bezel reduces value by 20-30%</p>
+                    <p class="text-sm text-purple-800">🔒 Authentication required</p>
+                    <p class="text-sm text-purple-800">📈 Conservative LTV recommendation: 50-60%</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Approval Form -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">🏦 Loan Approval</h3>
+            
+            {% if message %}
+            <!-- Approval Results -->
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                <h4 class="font-medium text-green-900 mb-3">✅ Approval Details</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <p class="text-green-700"><strong>Loan Amount:</strong> ${{ "%.2f"|format(loan_amount) }}</p>
+                        <p class="text-green-700"><strong>Interest Rate:</strong> {{ "%.1f"|format(interest_rate) }}%</p>
+                        <p class="text-green-700"><strong>Loan Term:</strong> {{ loan_term }} days</p>
+                    </div>
+                    <div>
+                        <p class="text-green-700"><strong>Total Interest:</strong> ${{ "%.2f"|format(total_interest) }}</p>
+                        <p class="text-green-700"><strong>Total Amount Due:</strong> ${{ "%.2f"|format(total_amount) }}</p>
+                        <p class="text-green-700"><strong>Monthly Payment:</strong> ${{ "%.2f"|format(monthly_payment) }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <form method="POST">
+                <div class="space-y-6">
+                    <!-- Loan Amount -->
+                    <div>
+                        <label for="loan_amount" class="block text-sm font-medium text-gray-700">Loan Amount ($)</label>
+                        <input type="number" id="loan_amount" name="loan_amount" value="4000" min="1000" max="4500" step="100" required
+                               class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <p class="mt-1 text-sm text-gray-500">Recommended: $4,000 (60% of estimated value)</p>
+                    </div>
+
+                    <!-- Interest Rate -->
+                    <div>
+                        <label for="interest_rate" class="block text-sm font-medium text-gray-700">Interest Rate (%)</label>
+                        <input type="number" id="interest_rate" name="interest_rate" value="12" min="8" max="20" step="0.5" required
+                               class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <p class="mt-1 text-sm text-gray-500">Standard rate: 12% annually</p>
+                    </div>
+
+                    <!-- Loan Term -->
+                    <div>
+                        <label for="loan_term" class="block text-sm font-medium text-gray-700">Loan Term (days)</label>
+                        <select id="loan_term" name="loan_term" required
+                                class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="180">6 months (180 days)</option>
+                            <option value="365" selected>1 year (365 days)</option>
+                            <option value="730">2 years (730 days)</option>
+                        </select>
+                    </div>
+
+                    <!-- Risk Assessment -->
+                    <div class="bg-yellow-50 p-4 rounded-lg">
+                        <h4 class="font-medium text-yellow-900 mb-2">⚠️ Risk Considerations</h4>
+                        <ul class="text-sm text-yellow-800 space-y-1">
+                            <li>• Aftermarket modifications reduce resale value</li>
+                            <li>• Authentication required for vintage pieces</li>
+                            <li>• Market volatility in luxury goods sector</li>
+                            <li>• Service history unknown</li>
+                        </ul>
+                    </div>
+
+                    <!-- Submit Buttons -->
+                    <div class="flex justify-end space-x-3">
+                        <a href="/collateral/list" class="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400">
+                            Cancel
+                        </a>
+                        <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700">
+                            ✅ Approve Collateral
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="mt-6 flex space-x-3">
+            <a href="/" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                🏠 Back to Dashboard
+            </a>
+            <a href="/collateral/list" class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700">
+                📋 View All Collaterals
+            </a>
+        </div>
+    </div>
+</body>
+</html>

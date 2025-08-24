@@ -1,8 +1,10 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, UploadFile, File
 from typing import List, Optional
 from datetime import datetime, timedelta
 import base64
 import re
+import os
+import uuid
 
 from dataModels.collateral import (
     Collateral, CollateralCreateRequest, CollateralCreateSimple, CollateralUpdate, CollateralResponse, 
@@ -377,3 +379,42 @@ async def extend_loan(collateral_id: str, extend_loan_request: ExtendLoanRequest
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+
+@router.post("/upload-image")
+async def upload_image(file: UploadFile = File(...)):
+    """Upload an image file and save it to the data folder"""
+    try:
+        # Validate file type
+        if not file.content_type or not file.content_type.startswith('image/'):
+            raise HTTPException(status_code=400, detail="File must be an image")
+        
+        # Create data directory if it doesn't exist
+        data_dir = os.path.join(os.path.dirname(__file__), '..', 'data')
+        os.makedirs(data_dir, exist_ok=True)
+        
+        # Generate unique filename
+        file_extension = os.path.splitext(file.filename)[1] if file.filename else '.jpg'
+        unique_filename = f"{uuid.uuid4()}{file_extension}"
+        file_path = os.path.join(data_dir, unique_filename)
+        
+        # Save the file
+        with open(file_path, "wb") as buffer:
+            content = await file.read()
+            buffer.write(content)
+        
+        # Return the relative path from backend root
+        relative_path = os.path.join('data', unique_filename)
+        
+        return {
+            "success": True,
+            "message": "Image uploaded successfully",
+            "file_path": relative_path,
+            "original_filename": file.filename,
+            "size": len(content)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to upload image: {str(e)}")

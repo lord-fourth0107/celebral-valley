@@ -4,7 +4,7 @@ A comprehensive DeFi lending and borrowing platform built for hackathon implemen
 
 ## 🚀 Project Overview
 
-Celebral Valley is a decentralized finance platform that enables users to borrow against physical assets (collateral) using AI-powered valuation. The platform combines traditional lending with modern DeFi principles, offering secure, transparent, and efficient lending services.
+BrokeNoMore is a decentralized finance platform that enables users to borrow against physical assets (collateral) using AI-powered valuation. The platform combines traditional lending with modern DeFi principles, offering secure, transparent, and efficient lending services.
 
 ## 🏗️ Architecture
 

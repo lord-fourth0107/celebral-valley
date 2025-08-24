@@ -216,8 +216,11 @@ This project was created for hackathon purposes. Please check with the team for 
 
 ## 👥 Team
 Shubham Rastogi
+
 Uttam Singh
+
 Rohan Mishra
+
 Yashavika Singh
 
 - **Backend Development**: FastAPI, PostgreSQL, AI/ML

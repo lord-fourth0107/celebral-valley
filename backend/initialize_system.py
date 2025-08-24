@@ -208,15 +208,15 @@ async def initialize_system():
         ))
         print("✅ Created admin account")
         
-        # User accounts
+        # User accounts with specific wallet IDs
         user_accounts = [
-            ("yashvika_account", "yashvika", "ACC001"),
-            ("shubham_account", "shubham", "ACC002"),
-            ("rohan_account", "rohan", "ACC003"),
-            ("uttam_account", "uttam", "ACC004")
+            ("yashvika_account", "yashvika", "ACC001", "0xE28ae4711eaD88BE1Aa5d7E634D625F84477Fb5e"),
+            ("shubham_account", "shubham", "ACC002", "0x84a13624E86B5D95A21693f49f1ee96519e12FDA"),
+            ("rohan_account", "rohan", "ACC003", "0x35DEe25910370Be8C84796cC55566Fbb62db5587"),
+            ("uttam_account", "uttam", "ACC004", "0x0847C35Ad8Dc926b3df5f6725CD13B9e10ED5449")
         ]
         
-        for account_id, user_id, account_number in user_accounts:
+        for account_id, user_id, account_number, wallet_id in user_accounts:
             await conn.execute("""
                 INSERT INTO accounts (
                     id, user_id, account_number, status, wallet_id, loan_balance, investment_balance, created_at, updated_at
@@ -226,13 +226,13 @@ async def initialize_system():
                 user_id,
                 account_number,
                 "active",
-                f"{user_id}_wallet",  # User wallet ID based on user_id
+                wallet_id,  # Use specific wallet ID for yashvika and uttam
                 0.00,
                 0.00,
                 datetime.utcnow(),
                 datetime.utcnow()
             ))
-            print(f"✅ Created account: {account_number}")
+            print(f"✅ Created account: {account_number} with wallet: {wallet_id}")
         
         await conn.commit()
         print("✅ System initialization completed successfully!")

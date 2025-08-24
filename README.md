@@ -198,33 +198,8 @@ poetry run pytest test_core_logic.py
 poetry run pytest test_integration.py
 ```
 
-## 📱 Mobile App Features
 
-### Screens
-- **Main Tabs**: Navigation between borrow and invest
-- **Borrow Loans**: View existing loans and apply for new ones
-- **New Loan Form**: Complete loan application process
-- **Camera Screen**: Document collateral assets
-- **Valuation Result**: AI-powered asset assessment
-- **Invest Tab**: Investment opportunities and portfolio
 
-### Key Components
-- **AnimatedSplashScreen**: Engaging app launch experience
-- **Navigation**: Tab-based and stack navigation
-- **API Integration**: RESTful API communication
-- **File Management**: Image upload and storage
-
-## 🔒 Security Considerations
-
-- Environment variables for sensitive configuration
-- Password hashing with bcrypt
-- JWT token management
-- CORS configuration
-- Input validation and sanitization
-- Rate limiting (production)
-- HTTPS enforcement (production)
-
-- Additional blockchain features
 
 ## 🤝 Contributing
 
